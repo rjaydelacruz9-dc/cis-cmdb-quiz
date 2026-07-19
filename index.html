@@ -9,10 +9,23 @@
     --bg:#f8fafc; --panel:#ffffff; --panel2:#f1f5f9; --text:#1e293b; --muted:#64748b;
     --accent:#0ea5e9; --accent2:#0284c7; --green:#16a34a; --greenbg:#dcfce7; --red:#dc2626;
     --redbg:#fee2e2; --amber:#d97706; --border:#e2e8f0; --radius:14px;
+    --selbg:#e0f2fe; --chipontext:var(--accent2); --matchcolor:#9333ea;
+    --notebg:#fef3c7; --noteborder:#fde68a; --notetext:#92400e;
+    --tagbg:#e0f2fe; --tagmultibg:#fef3c7; --tagmatchbg:#f3e8ff;
+    --btntext:#ffffff; --bodygrad:linear-gradient(160deg,#eef2f7,#f8fafc 40%,#eef4fb); --shadow:rgba(0,0,0,.08);
+  }
+  :root[data-theme="dark"]{
+    --bg:#0f172a; --panel:#1e293b; --panel2:#243449; --text:#e2e8f0; --muted:#94a3b8;
+    --accent:#38bdf8; --accent2:#0ea5e9; --green:#22c55e; --greenbg:#14361f; --red:#ef4444;
+    --redbg:#3a1519; --amber:#f59e0b; --border:#334155;
+    --selbg:#1c3346; --chipontext:var(--accent); --matchcolor:#c084fc;
+    --notebg:#2a220f; --noteborder:#4a3a12; --notetext:var(--amber);
+    --tagbg:#1c3346; --tagmultibg:#3a2c0f; --tagmatchbg:#33184d;
+    --btntext:#04222f; --bodygrad:linear-gradient(160deg,#0b1220,#0f172a 40%,#111c30); --shadow:rgba(0,0,0,.35);
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
-    background:linear-gradient(160deg,#eef2f7,#f8fafc 40%,#eef4fb);color:var(--text);min-height:100vh;line-height:1.5}
+    background:var(--bodygrad);color:var(--text);min-height:100vh;line-height:1.5}
   .wrap{max-width:820px;margin:0 auto;padding:24px 18px 80px}
   @media (min-width:1000px){
     body{font-size:19px}
@@ -23,8 +36,8 @@
   h1{font-size:1.5rem;margin:0 0 4px}
   .sub{color:var(--muted);font-size:.92rem;margin-bottom:22px}
   .card{background:var(--panel);border:1px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:18px;
-    box-shadow:0 10px 30px rgba(0,0,0,.25)}
-  .btn{background:var(--accent2);color:#ffffff;border:none;border-radius:10px;padding:11px 20px;font-size:.95rem;
+    box-shadow:0 10px 30px var(--shadow)}
+  .btn{background:var(--accent2);color:var(--btntext);border:none;border-radius:10px;padding:11px 20px;font-size:.95rem;
     font-weight:650;cursor:pointer;transition:.15s;display:inline-flex;align-items:center;gap:8px}
   .btn:hover{background:var(--accent);transform:translateY(-1px)}
   .btn:disabled{opacity:.4;cursor:not-allowed;transform:none}
@@ -36,16 +49,18 @@
   label.opt{display:flex;gap:12px;align-items:flex-start;background:var(--panel2);border:1.5px solid var(--border);
     border-radius:11px;padding:13px 15px;margin:9px 0;cursor:pointer;transition:.12s}
   label.opt:hover{border-color:var(--accent2)}
-  label.opt.sel{border-color:var(--accent);background:#e0f2fe}
-  label.opt.correct{border-color:var(--green);background:var(--greenbg)}
-  label.opt.wrong{border-color:var(--red);background:var(--redbg)}
-  label.opt input{margin-top:3px;accent-color:var(--accent);transform:scale(1.15)}
+  label.opt.sel{border-color:var(--accent);background:var(--selbg);box-shadow:0 0 0 1px var(--accent) inset}
+  label.opt.correct{border-color:var(--green);background:var(--greenbg);box-shadow:0 0 0 1px var(--green) inset}
+  label.opt.wrong{border-color:var(--red);background:var(--redbg);box-shadow:0 0 0 1px var(--red) inset}
+  label.opt input{margin-top:3px;transform:scale(1.35)}
+  label.opt input[type=radio]{accent-color:var(--accent2)}
+  label.opt input[type=checkbox]{accent-color:var(--amber)}
   .optltr{font-weight:700;color:var(--muted);min-width:18px}
   .qtext{font-size:1.08rem;font-weight:600;margin:6px 0 14px}
-  .tag{display:inline-block;background:var(--panel2);color:var(--accent);font-size:.72rem;font-weight:600;
-    padding:3px 10px;border-radius:20px;border:1px solid var(--border);text-transform:uppercase;letter-spacing:.03em}
-  .tag.multi{color:var(--amber)}
-  .tag.match{color:#9333ea}
+  .tag{display:inline-block;background:var(--tagbg);color:var(--accent2);font-size:.74rem;font-weight:700;
+    padding:5px 12px;border-radius:20px;border:1px solid transparent;text-transform:uppercase;letter-spacing:.03em}
+  .tag.multi{background:var(--tagmultibg);color:var(--amber)}
+  .tag.match{background:var(--tagmatchbg);color:var(--matchcolor)}
   .progress{height:8px;background:var(--panel2);border-radius:20px;overflow:hidden;margin:14px 0}
   .progress>div{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));width:0;transition:width .3s}
   .meta{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;color:var(--muted);margin-bottom:4px}
@@ -54,8 +69,8 @@
   .feedback.ok{background:var(--greenbg);border:1px solid var(--green)}
   .feedback.no{background:var(--redbg);border:1px solid var(--red)}
   .feedback b{display:block;margin-bottom:3px}
-  .note{font-size:.83rem;color:#92400e;margin-top:8px;padding:8px 11px;background:#fef3c7;border-radius:8px;
-    border:1px solid #fde68a}
+  .note{font-size:.83rem;color:var(--notetext);margin-top:8px;padding:8px 11px;background:var(--notebg);border-radius:8px;
+    border:1px solid var(--noteborder)}
   select.match{background:var(--panel2);color:var(--text);border:1.5px solid var(--border);border-radius:8px;
     padding:8px 10px;font-size:.9rem;width:100%;margin-top:6px}
   .matchrow{margin:11px 0;padding:11px 13px;background:var(--panel2);border-radius:10px;border:1.5px solid var(--border)}
@@ -71,13 +86,17 @@
   .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
   .chip{font-size:.82rem;padding:7px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--panel2);
     cursor:pointer;user-select:none;transition:.12s}
-  .chip.on{background:#e0f2fe;border-color:var(--accent);color:var(--accent2)}
+  .chip.on{background:var(--selbg);border-color:var(--accent);color:var(--chipontext)}
   .field{margin:14px 0}
   .field label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:7px;font-weight:600}
   .toggle{display:flex;align-items:center;gap:9px;font-size:.9rem;cursor:pointer;padding:6px 0}
   .toggle input{transform:scale(1.2);accent-color:var(--accent)}
   input[type=number]{background:var(--panel2);color:var(--text);border:1.5px solid var(--border);border-radius:8px;
     padding:9px 11px;font-size:.9rem;width:110px}
+  .field input[type=text],.field input[type=email],.field input[type=password]{
+    background:var(--panel2);color:var(--text);border:1.5px solid var(--border);border-radius:8px;
+    padding:9px 11px;font-size:.95rem;width:100%}
+  .code-input{letter-spacing:6px;text-align:center;font-size:1.2rem !important}
   .flagbtn{background:transparent;border:1px solid var(--border);color:var(--muted);border-radius:8px;padding:6px 11px;
     cursor:pointer;font-size:.8rem}
   .flagbtn.on{color:var(--amber);border-color:var(--amber)}
@@ -93,11 +112,73 @@
 </head>
 <body>
 <div class="wrap">
-  <h1>CIS – CMDB Data Foundation</h1>
-  <div class="sub">Practice quiz reviewer · built from your answer-key screenshots · <span id="qtotal"></span> questions</div>
+  <div class="row" style="align-items:flex-start">
+    <div>
+      <h1>CIS – CMDB Data Foundation</h1>
+      <div class="sub">Practice quiz reviewer · built from your answer-key screenshots · <span id="qtotal"></span> questions</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="row" style="gap:12px;flex-wrap:nowrap;margin-top:6px">
+      <button id="themeToggle" class="flagbtn" onclick="toggleTheme()" title="Toggle light/dark theme">🌙 Dark</button>
+      <button id="manageAccessBtn" class="flagbtn hide" onclick="openAdminPanel()">🛡 Manage access</button>
+      <a id="logoutLink" class="link hide" onclick="logout()">Log out</a>
+    </div>
+  </div>
+
+  <!-- LOGIN -->
+  <div id="login" class="card">
+    <div class="field">
+      <label>Sign in</label>
+      <div class="row">
+        <div id="tabEmailBtn" class="chip on" onclick="setLoginTab('email')">Email code</div>
+        <div id="tabAdminBtn" class="chip" onclick="setLoginTab('admin')">Admin</div>
+      </div>
+    </div>
+
+    <div id="emailLogin">
+      <div id="emailStep1">
+        <div class="field">
+          <label>Email address</label>
+          <input type="email" id="loginEmail" placeholder="you@example.com" autocomplete="email">
+        </div>
+        <button class="btn wide" id="sendCodeBtn" onclick="sendCode()">Send login code →</button>
+      </div>
+      <div id="emailStep2" class="hide">
+        <div class="note">Code sent to <b id="sentToEmail"></b> — check your inbox (and spam folder). It expires in 10 minutes.</div>
+        <div class="field">
+          <label>6-digit code</label>
+          <input type="text" id="loginCode" class="code-input" maxlength="6" inputmode="numeric" placeholder="123456" autocomplete="one-time-code">
+        </div>
+        <button class="btn wide" id="verifyCodeBtn" onclick="verifyCode()">Verify &amp; sign in →</button>
+        <div class="row" style="margin-top:10px">
+          <a class="link" onclick="sendCode()">Resend code</a>
+          <div class="spacer"></div>
+          <a class="link" onclick="backToEmail()">Use a different email</a>
+        </div>
+      </div>
+      <div id="emailPending" class="hide">
+        <div class="note">Thanks! <b id="pendingEmailText"></b> isn't approved yet — a request was sent to the admin. Try again once you've been approved.</div>
+        <button class="btn ghost wide" onclick="backToEmail()">Use a different email</button>
+      </div>
+    </div>
+
+    <div id="adminLoginBox" class="hide">
+      <div class="field">
+        <label>Username</label>
+        <input type="text" id="adminUser" autocomplete="username">
+      </div>
+      <div class="field">
+        <label>Password</label>
+        <input type="password" id="adminPass" autocomplete="current-password">
+      </div>
+      <button class="btn wide" onclick="adminLogin()">Sign in →</button>
+    </div>
+
+    <div id="loginError" class="feedback no"></div>
+  </div>
 
   <!-- START -->
-  <div id="start" class="card">
+  <div id="start" class="card hide">
     <div class="field">
       <label>Mode</label>
       <div class="row">
@@ -125,9 +206,40 @@
     <div class="kbd">Tip: press <b>1–6</b> to pick options, <b>Enter</b> to check / continue.</div>
   </div>
 
+  <!-- ADMIN PANEL -->
+  <div id="adminPanel" class="card hide">
+    <div class="row" style="margin-bottom:14px">
+      <label style="font-weight:700;color:var(--muted)">Manage access</label>
+      <div class="spacer"></div>
+      <button class="btn ghost" onclick="show('start')">← Back</button>
+    </div>
+    <div class="field">
+      <label>Approve an email directly</label>
+      <div class="row">
+        <input type="email" id="newApprovedEmail" placeholder="someone@example.com" style="flex:1">
+        <button class="btn" onclick="adminApproveEmail()">Approve</button>
+      </div>
+    </div>
+    <div id="adminMsg" class="feedback no"></div>
+    <div class="field">
+      <label>Pending requests</label>
+      <div id="pendingList" class="chips"></div>
+    </div>
+    <div class="field">
+      <label>Approved emails</label>
+      <div id="approvedList" class="chips"></div>
+    </div>
+  </div>
+
   <!-- QUIZ -->
   <div id="quiz" class="card hide">
-    <div class="meta"><span id="counter"></span><button id="flag" class="flagbtn" onclick="toggleFlag()">⚑ Flag</button></div>
+    <div class="meta">
+      <span id="counter"></span>
+      <div class="row" style="gap:8px">
+        <button id="flag" class="flagbtn" onclick="toggleFlag()">⚑ Flag</button>
+        <button class="flagbtn" onclick="quitToResults()">⏹ End &amp; score</button>
+      </div>
+    </div>
     <div class="progress"><div id="bar"></div></div>
     <div class="row" style="margin-bottom:8px"><span id="cat" class="tag"></span> <span id="typeTag"></span></div>
     <div id="qtext" class="qtext"></div>
@@ -137,8 +249,6 @@
     <div class="row" style="margin-top:16px">
       <button id="check" class="btn" onclick="check()">Check answer</button>
       <button id="next" class="btn hide" onclick="next()">Next →</button>
-      <div class="spacer"></div>
-      <button class="btn ghost" onclick="quitToResults()">End &amp; score</button>
     </div>
   </div>
 
@@ -217,7 +327,158 @@ function resumeWrong(){
   session={pool:shuffle(pool), i:0, correct:0, wrong:0, results:[], instant:true, shuffleO:true, flags:new Set()};
   show('quiz'); render();
 }
-function show(id){['start','quiz','results'].forEach(x=>document.getElementById(x).classList.toggle('hide',x!==id));}
+function show(id){['login','start','quiz','results','adminPanel'].forEach(x=>document.getElementById(x).classList.toggle('hide',x!==id));}
+
+// --- theme ---
+function applyTheme(t){
+  document.documentElement.setAttribute('data-theme', t);
+  localStorage.setItem('quizTheme', t);
+  document.getElementById('themeToggle').textContent = t==='dark' ? '☀ Light' : '🌙 Dark';
+}
+function toggleTheme(){
+  applyTheme(document.documentElement.getAttribute('data-theme')==='dark' ? 'light' : 'dark');
+}
+(function initTheme(){
+  const saved=localStorage.getItem('quizTheme');
+  applyTheme(saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
+})();
+
+// --- auth ---
+function isAuthed(){
+  try{
+    const a=JSON.parse(localStorage.getItem('quizAuth')||'null');
+    return !!(a && a.exp && Date.now()<a.exp);
+  }catch(e){return false;}
+}
+function grantAccess(){
+  localStorage.setItem('quizAuth', JSON.stringify({exp:Date.now()+7*24*60*60*1000}));
+  document.getElementById('logoutLink').classList.remove('hide');
+  show('start');
+}
+function logout(){ localStorage.removeItem('quizAuth'); sessionStorage.removeItem('adminCreds'); location.reload(); }
+
+function loginErr(msg){
+  const el=document.getElementById('loginError');
+  if(!msg){ el.classList.remove('show'); el.textContent=''; return; }
+  el.textContent=msg; el.classList.add('show');
+}
+function setLoginTab(tab){
+  document.getElementById('tabEmailBtn').classList.toggle('on', tab==='email');
+  document.getElementById('tabAdminBtn').classList.toggle('on', tab==='admin');
+  document.getElementById('emailLogin').classList.toggle('hide', tab!=='email');
+  document.getElementById('adminLoginBox').classList.toggle('hide', tab!=='admin');
+  loginErr(null);
+}
+function backToEmail(){
+  document.getElementById('emailStep1').classList.remove('hide');
+  document.getElementById('emailStep2').classList.add('hide');
+  document.getElementById('emailPending').classList.add('hide');
+  otpToken=null; loginErr(null);
+}
+let otpToken=null, otpEmail=null;
+async function sendCode(){
+  const email=document.getElementById('loginEmail').value.trim().toLowerCase();
+  loginErr(null);
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ loginErr('Enter a valid email address.'); return; }
+  const btn=document.getElementById('sendCodeBtn'); btn.disabled=true; btn.textContent='Sending…';
+  try{
+    const r=await fetch('/api/send-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email})});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(data.error||'Could not send code.');
+    if(data.status==='pending'){
+      document.getElementById('pendingEmailText').textContent=email;
+      document.getElementById('emailStep1').classList.add('hide');
+      document.getElementById('emailPending').classList.remove('hide');
+      return;
+    }
+    otpToken=data.token; otpEmail=email;
+    document.getElementById('sentToEmail').textContent=email;
+    document.getElementById('emailStep1').classList.add('hide');
+    document.getElementById('emailStep2').classList.remove('hide');
+  }catch(e){ loginErr(e.message); }
+  finally{ btn.disabled=false; btn.textContent='Send login code →'; }
+}
+async function verifyCode(){
+  const code=document.getElementById('loginCode').value.trim();
+  loginErr(null);
+  if(!otpToken){ loginErr('Request a new code first.'); return; }
+  if(!/^\d{6}$/.test(code)){ loginErr('Enter the 6-digit code.'); return; }
+  const btn=document.getElementById('verifyCodeBtn'); btn.disabled=true; btn.textContent='Verifying…';
+  try{
+    const r=await fetch('/api/verify-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:otpEmail,code,token:otpToken})});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(data.error||'Incorrect code.');
+    grantAccess();
+  }catch(e){ loginErr(e.message); }
+  finally{ btn.disabled=false; btn.textContent='Verify & sign in →'; }
+}
+function adminLogin(){
+  const u=document.getElementById('adminUser').value.trim();
+  const p=document.getElementById('adminPass').value;
+  if(u==='admin' && p==='rjdc123'){
+    sessionStorage.setItem('adminCreds', JSON.stringify({u,p}));
+    document.getElementById('manageAccessBtn').classList.remove('hide');
+    grantAccess();
+  } else{ loginErr('Incorrect username or password.'); }
+}
+
+// --- admin panel (manage which emails may request a login code) ---
+function adminCreds(){ try{ return JSON.parse(sessionStorage.getItem('adminCreds')||'null'); }catch(e){ return null; } }
+async function adminAction(action, extra){
+  const c=adminCreds();
+  if(!c){ alert('Admin session expired, please sign in again.'); logout(); return null; }
+  const r=await fetch('/api/admin-action',{method:'POST',headers:{'Content-Type':'application/json'},
+    body:JSON.stringify(Object.assign({action,adminUser:c.u,adminPass:c.p},extra||{}))});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error||'Request failed');
+  return data;
+}
+function adminMsg(msg){
+  const el=document.getElementById('adminMsg');
+  if(!msg){ el.classList.remove('show'); el.textContent=''; return; }
+  el.textContent=msg; el.classList.add('show');
+}
+async function openAdminPanel(){
+  show('adminPanel');
+  await refreshAdminLists();
+}
+async function refreshAdminLists(){
+  adminMsg(null);
+  try{
+    const data=await adminAction('list');
+    renderEmailChips('pendingList', data.pending, 'pending');
+    renderEmailChips('approvedList', data.approved, 'approved');
+  }catch(e){ adminMsg(e.message); }
+}
+function renderEmailChips(elId, emails, kind){
+  const el=document.getElementById(elId); el.innerHTML='';
+  if(!emails || !emails.length){ el.innerHTML='<small class="muted">None</small>'; return; }
+  emails.forEach(email=>{
+    const chip=document.createElement('div'); chip.className='chip';
+    chip.textContent=email+'  ';
+    const act=(label,action)=>{
+      const a=document.createElement('a'); a.className='link'; a.style.marginLeft='6px'; a.textContent=label;
+      a.onclick=async()=>{ try{ await adminAction(action,{email}); await refreshAdminLists(); }catch(e){ adminMsg(e.message); } };
+      chip.appendChild(a);
+    };
+    if(kind==='pending'){ act('Approve','approve'); act('Deny','deny'); }
+    else { act('Revoke','revoke'); }
+    el.appendChild(chip);
+  });
+}
+async function adminApproveEmail(){
+  const input=document.getElementById('newApprovedEmail');
+  const email=input.value.trim().toLowerCase();
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ adminMsg('Enter a valid email.'); return; }
+  try{ await adminAction('approve',{email}); input.value=''; await refreshAdminLists(); }
+  catch(e){ adminMsg(e.message); }
+}
+
+if(isAuthed()){
+  document.getElementById('logoutLink').classList.remove('hide');
+  if(adminCreds()) document.getElementById('manageAccessBtn').classList.remove('hide');
+  show('start');
+} else show('login');
 
 let cur, curOrder, answered;
 function render(){
@@ -308,8 +569,13 @@ function check(){
   const fb=document.getElementById('fb');
   if(session.instant){
     fb.className='feedback show '+(correct?'ok':'no');
-    fb.innerHTML='<b>'+(correct?'✓ Correct':'✗ Not quite')+'</b>'+
-      (cur.type!=='match'?('Correct: '+cur.correct.map(i=>cur.options[i]).join('  •  ')):'');
+    let correctHtml='';
+    if(cur.type!=='match'){
+      correctHtml = cur.correct.length>1
+        ? 'Correct:<br>'+cur.correct.map(i=>'• '+cur.options[i]).join('<br>')
+        : 'Correct: '+cur.options[cur.correct[0]];
+    }
+    fb.innerHTML='<b>'+(correct?'✓ Correct':'✗ Not quite')+'</b>'+correctHtml;
   }
   if(cur.note){
     document.getElementById('noteBox').innerHTML='<div class="note">⚠ '+cur.note+'</div>';
