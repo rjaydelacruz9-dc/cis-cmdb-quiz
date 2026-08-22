@@ -179,6 +179,13 @@
 
   <!-- START -->
   <div id="start" class="card hide">
+    <div id="resumeSessionBox" class="hide" style="margin-bottom:16px">
+      <div class="note" style="margin-top:0">You have an unfinished quiz — <span id="resumeSessionInfo"></span></div>
+      <div class="row" style="margin-top:10px">
+        <button class="btn" onclick="resumeSession()">Resume →</button>
+        <button class="btn ghost" onclick="dismissResumeSession()">Start fresh instead</button>
+      </div>
+    </div>
     <div class="field">
       <label>Mode</label>
       <div class="row">
@@ -288,9 +295,21 @@ document.getElementById('qtotal').textContent = QUESTIONS.length;
 const cats = [...new Set(QUESTIONS.map(q=>q.category))].sort();
 const chipsEl = document.getElementById('chips');
 cats.forEach(c=>{
-  const d=document.createElement('div'); d.className='chip'; d.textContent=c+' ('+QUESTIONS.filter(q=>q.category===c).length+')';
+  const d=document.createElement('div'); d.className='chip';
+  const label=document.createElement('span'); label.textContent=c+' ('+QUESTIONS.filter(q=>q.category===c).length+')';
+  const badge=document.createElement('span'); badge.dataset.role='badge';
+  d.appendChild(label); d.appendChild(badge);
   d.dataset.cat=c; d.onclick=()=>{d.classList.toggle('on')}; chipsEl.appendChild(d);
 });
+function applyProgressBadges(progressList){
+  const byCat={}; (progressList||[]).forEach(p=>{ byCat[p.category]=p; });
+  document.querySelectorAll('#chips .chip').forEach(chip=>{
+    const p=byCat[chip.dataset.cat]; const badge=chip.querySelector('[data-role=badge]');
+    if(!p){ badge.textContent=''; return; }
+    if(p.status==='mastered'){ badge.textContent=' ✓'; badge.style.color='var(--green)'; }
+    else{ badge.textContent=' ●'; badge.style.color='var(--amber)'; }
+  });
+}
 document.querySelectorAll('input[name=mode]').forEach(r=>r.onchange=()=>{
   document.getElementById('catBox').classList.toggle('hide', document.querySelector('input[name=mode]:checked').value!=='cat');
 });
@@ -318,6 +337,7 @@ function buildPool(){
 function start(){
   const pool=buildPool();
   if(!pool.length){alert('No questions match that selection.');return;}
+  if(pendingResumeSession) dismissResumeSession();
   session={pool, i:0, correct:0, wrong:0, results:[], instant:document.getElementById('instant').checked,
            shuffleO:document.getElementById('shuffleO').checked, flags:new Set()};
   show('quiz'); render();
@@ -328,6 +348,75 @@ function resumeWrong(){
   show('quiz'); render();
 }
 function show(id){['login','start','quiz','results','adminPanel'].forEach(x=>document.getElementById(x).classList.toggle('hide',x!==id));}
+
+// --- progress + resume sync (Supabase-backed via /api/data) ---
+function getIdentity(){ return localStorage.getItem('quizIdentity'); }
+async function dataAction(action, extra){
+  const r=await fetch('/api/data',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(Object.assign({action},extra||{}))});
+  const data=await r.json().catch(()=>({}));
+  if(!r.ok) throw new Error(data.error||'Request failed');
+  return data;
+}
+let pendingResumeSession=null;
+async function loadProgressAndSession(){
+  const identity=getIdentity();
+  if(!identity) return;
+  try{
+    const data=await dataAction('get-all',{identity});
+    applyProgressBadges(data.progress);
+    if(data.session && data.session.poolIds && data.session.poolIds.length){
+      pendingResumeSession=data.session;
+      const total=data.session.poolIds.length;
+      document.getElementById('resumeSessionInfo').textContent=`Question ${Math.min(data.session.i+1,total)} of ${total}.`;
+      document.getElementById('resumeSessionBox').classList.remove('hide');
+    }
+  }catch(e){ console.warn('Progress sync unavailable:', e.message); }
+}
+function resumeSession(){
+  if(!pendingResumeSession) return;
+  const s=pendingResumeSession;
+  session={
+    pool:s.poolIds.map(id=>QUESTIONS.find(q=>q.id===id)).filter(Boolean),
+    i:s.i, correct:s.correct, wrong:s.wrong, results:s.results,
+    instant:s.instant, shuffleO:s.shuffleO, flags:new Set(s.flagIds||[])
+  };
+  document.getElementById('resumeSessionBox').classList.add('hide');
+  pendingResumeSession=null;
+  show('quiz');
+  document.getElementById('bar').style.width=((session.i)/session.pool.length*100)+'%';
+  render();
+}
+function dismissResumeSession(){
+  document.getElementById('resumeSessionBox').classList.add('hide');
+  pendingResumeSession=null;
+  const identity=getIdentity();
+  if(identity) dataAction('clear-session',{identity}).catch(()=>{});
+}
+function currentSessionSnapshot(){
+  if(!session) return null;
+  return {
+    poolIds:session.pool.map(q=>q.id), i:session.i, correct:session.correct, wrong:session.wrong,
+    results:session.results, instant:session.instant, shuffleO:session.shuffleO, flagIds:[...session.flags]
+  };
+}
+function saveSessionSnapshot(){
+  const identity=getIdentity();
+  if(!identity || !session) return;
+  dataAction('save-session',{identity,session:currentSessionSnapshot()}).catch(()=>{});
+}
+function finishSession(){
+  const identity=getIdentity();
+  if(!identity || !session) return;
+  const byCat={};
+  session.results.forEach(r=>{
+    const q=QUESTIONS.find(x=>x.id===r.id); if(!q) return;
+    const c=byCat[q.category] || (byCat[q.category]={category:q.category,correct:0,attempted:0,total:QUESTIONS.filter(x=>x.category===q.category).length});
+    c.attempted++; if(r.correct) c.correct++;
+  });
+  const categoryStats=Object.values(byCat);
+  if(categoryStats.length) dataAction('save-progress',{identity,categoryStats}).catch(()=>{});
+  dataAction('clear-session',{identity}).catch(()=>{});
+}
 
 // --- theme ---
 function applyTheme(t){
@@ -350,12 +439,14 @@ function isAuthed(){
     return !!(a && a.exp && Date.now()<a.exp);
   }catch(e){return false;}
 }
-function grantAccess(){
+function grantAccess(identity){
+  if(identity) localStorage.setItem('quizIdentity', identity);
   localStorage.setItem('quizAuth', JSON.stringify({exp:Date.now()+7*24*60*60*1000}));
   document.getElementById('logoutLink').classList.remove('hide');
   show('start');
+  loadProgressAndSession();
 }
-function logout(){ localStorage.removeItem('quizAuth'); sessionStorage.removeItem('adminCreds'); location.reload(); }
+function logout(){ localStorage.removeItem('quizAuth'); localStorage.removeItem('quizIdentity'); sessionStorage.removeItem('adminCreds'); location.reload(); }
 
 function loginErr(msg){
   const el=document.getElementById('loginError');
@@ -408,7 +499,7 @@ async function verifyCode(){
     const r=await fetch('/api/verify-code',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({email:otpEmail,code,token:otpToken})});
     const data=await r.json().catch(()=>({}));
     if(!r.ok) throw new Error(data.error||'Incorrect code.');
-    grantAccess();
+    grantAccess(otpEmail);
   }catch(e){ loginErr(e.message); }
   finally{ btn.disabled=false; btn.textContent='Verify & sign in →'; }
 }
@@ -418,7 +509,7 @@ function adminLogin(){
   if(u==='admin' && p==='rjdc123'){
     sessionStorage.setItem('adminCreds', JSON.stringify({u,p}));
     document.getElementById('manageAccessBtn').classList.remove('hide');
-    grantAccess();
+    grantAccess('admin');
   } else{ loginErr('Incorrect username or password.'); }
 }
 
@@ -478,6 +569,7 @@ if(isAuthed()){
   document.getElementById('logoutLink').classList.remove('hide');
   if(adminCreds()) document.getElementById('manageAccessBtn').classList.remove('hide');
   show('start');
+  loadProgressAndSession();
 } else show('login');
 
 let cur, curOrder, answered;
@@ -565,6 +657,7 @@ function check(){
   if(correct){session.correct++; store.wrongIds=store.wrongIds.filter(x=>x!==cur.id);}
   else {session.wrong++; if(!store.wrongIds.includes(cur.id)) store.wrongIds.push(cur.id);}
   save();
+  saveSessionSnapshot();
 
   const fb=document.getElementById('fb');
   if(session.instant){
@@ -590,10 +683,12 @@ function next(){
   if(session.i>=session.pool.length){ showResults(); return; }
   document.getElementById('bar').style.width=((session.i)/session.pool.length*100)+'%';
   render();
+  saveSessionSnapshot();
 }
 function quitToResults(){ if(confirm('End the quiz and see your score so far?')) showResults(); }
 
 function showResults(){
+  finishSession();
   show('results');
   document.getElementById('rCorrect').textContent=session.correct;
   document.getElementById('rWrong').textContent=session.wrong;

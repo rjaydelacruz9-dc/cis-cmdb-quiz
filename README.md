@@ -8,6 +8,8 @@ A single-file, self-contained interactive practice quiz for the ServiceNow
 - Tracks missed questions and offers a **Review wrong answers** / **Retry** mode.
 - Filter by category, choose question count, shuffle order.
 - Login gate: sign in with an emailed one-time code, or a local admin/password.
+- Progress tracking (Supabase-backed): per-category mastery badges, and a "resume where you
+  left off" prompt if you close the app mid-quiz.
 
 ## Run locally
 Open `index.html` in any browser. The quiz itself needs no build step or server.
@@ -44,6 +46,39 @@ Set these in the Vercel project (Settings → Environment Variables), then redep
 - `ADMIN_USERNAME` / `ADMIN_PASSWORD` (optional) — override the defaults (`admin` / `rjdc123`)
   used to authorize the **Manage access** panel's API calls (`api/admin-action.js`). The
   quiz-unlock **Admin** login tab itself is unaffected — that check stays client-side.
+
+## Progress tracking & resume (Supabase)
+Whoever you're signed in as (the email you verified, or `admin`) is your "identity" for
+progress purposes — it's what ties saved data to you.
+
+- **Category badges.** After you finish a category in one pass, `api/data.js` records your
+  correct/attempted/total for it. Score 100% in a single pass and the category gets a green
+  ✓ ("mastered") on the start screen; anything less shows an amber ● ("incomplete"). A
+  category you haven't touched shows no badge at all.
+- **Resume.** While a quiz is in progress, your position (which questions, current index,
+  scores so far, flags) autosaves after every answer. Come back later — same device or a
+  different one, as long as you sign in with the same identity — and the start screen offers
+  **Resume →** at the exact question, or **Start fresh instead** to discard it.
+- Ending a quiz early via **⏹ End & score** still records whatever you'd answered so far as
+  that category's latest attempt, and clears the resumable session (you've deliberately
+  stopped, not walked away mid-question).
+
+### Setup
+1. Create a free project at [supabase.com](https://supabase.com).
+2. In its SQL Editor, run everything in [`supabase.sql`](supabase.sql) — creates
+   `quiz_progress` and `quiz_sessions` with Row Level Security left on (the app only ever
+   talks to Supabase via the service_role key from serverless functions, which bypasses RLS;
+   no anon/client-side Supabase access is used).
+3. In the Supabase dashboard: **Settings → API** — copy the **Project URL** and the
+   **service_role** key (not the anon/public one).
+4. Add to Vercel (Settings → Environment Variables), then redeploy:
+   - `SUPABASE_URL` — the Project URL.
+   - `SUPABASE_SERVICE_ROLE_KEY` — the service_role key. Keep this secret; it has full
+     read/write access to your Supabase project and must never reach client-side code.
+
+Without these two variables, the app still works exactly as before — badges just won't
+appear and there's nothing to resume, since `api/data.js` calls fail silently (caught and
+logged to the console, not shown to you) rather than blocking quiz-taking.
 
 ## Deploy (Vercel)
 This repo is a static site with serverless functions under `api/` (`lib/` holds shared
