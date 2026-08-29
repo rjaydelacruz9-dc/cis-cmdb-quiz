@@ -65,6 +65,12 @@
   .progress>div{height:100%;background:linear-gradient(90deg,var(--accent2),var(--accent));width:0;transition:width .3s}
   .meta{display:flex;justify-content:space-between;align-items:center;font-size:.85rem;color:var(--muted);margin-bottom:4px}
   .feedback{border-radius:11px;padding:13px 15px;margin:12px 0;font-size:.92rem;display:none}
+  #aiBox{margin:12px 0}
+  @media (min-width:640px){
+    .fbrow.wrong{display:flex;gap:16px;align-items:flex-start}
+    .fbrow.wrong #fb{flex:1 1 300px;min-width:0}
+    .fbrow.wrong #aiBox{flex:0 0 260px;margin-top:12px}
+  }
   .feedback.show{display:block}
   .feedback.ok{background:var(--greenbg);border:1px solid var(--green)}
   .feedback.no{background:var(--redbg);border:1px solid var(--red)}
@@ -284,10 +290,12 @@
     <div class="row" style="margin-bottom:8px"><span id="cat" class="tag"></span> <span id="typeTag"></span></div>
     <div id="qtext" class="qtext"></div>
     <div id="opts"></div>
-    <div id="fb" class="feedback"></div>
-    <div id="aiBox" class="hide" style="margin:10px 0">
-      <button id="aiBtn" class="btn ghost" onclick="getAiInsights()">✨ AI insights on this answer</button>
-      <div id="aiResult" class="note hide" style="margin-top:8px;white-space:pre-wrap"></div>
+    <div id="fbRow" class="fbrow">
+      <div id="fb" class="feedback"></div>
+      <div id="aiBox" class="hide">
+        <button id="aiBtn" class="btn ghost" onclick="getAiInsights()">✨ AI insights on this answer</button>
+        <div id="aiResult" class="note hide" style="margin-top:8px;white-space:pre-wrap"></div>
+      </div>
     </div>
     <div id="noteBox"></div>
     <div class="row" style="margin-top:16px">
@@ -698,6 +706,7 @@ function render(){
   flagBtn.classList.toggle('on',session.flags.has(cur.id));
   const fb=document.getElementById('fb'); fb.className='feedback'; fb.innerHTML='';
   document.getElementById('noteBox').innerHTML='';
+  document.getElementById('fbRow').classList.remove('wrong');
   document.getElementById('aiBox').classList.add('hide');
   const aiBtn=document.getElementById('aiBtn'); aiBtn.classList.remove('hide'); aiBtn.disabled=false; aiBtn.textContent='✨ AI insights on this answer';
   const aiResult=document.getElementById('aiResult'); aiResult.classList.add('hide'); aiResult.textContent='';
@@ -783,6 +792,7 @@ function check(){
         : 'Correct: '+cur.options[cur.correct[0]];
     }
     fb.innerHTML='<b>'+(correct?'✓ Correct':'✗ Not quite')+'</b>'+correctHtml;
+    document.getElementById('fbRow').classList.toggle('wrong', !correct);
     document.getElementById('aiBox').classList.remove('hide');
   }
   if(cur.note){
