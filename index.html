@@ -83,10 +83,35 @@
   .stat .n{font-size:2rem;font-weight:750}
   .stat .l{font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
   .stat.g .n{color:var(--green)} .stat.r .n{color:var(--red)}
-  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
-  .chip{font-size:.82rem;padding:7px 12px;border-radius:20px;border:1.5px solid var(--border);background:var(--panel2);
-    cursor:pointer;user-select:none;transition:.12s}
-  .chip.on{background:var(--selbg);border-color:var(--accent);color:var(--chipontext)}
+  .cattoolbar{display:flex;align-items:center;gap:14px;margin:10px 0 4px;flex-wrap:wrap}
+  .cattoolbar a{font-size:.82rem;color:var(--accent2);cursor:pointer;text-decoration:none;font-weight:600}
+  .cattoolbar a:hover{text-decoration:underline}
+  .cattoolbar .count{margin-left:auto;font-size:.8rem;color:var(--muted)}
+  .grouplabel{font-size:.72rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;
+    margin:16px 0 8px;display:flex;align-items:center;gap:8px}
+  .grouplabel:first-of-type{margin-top:8px}
+  .grouplabel .line{flex:1;height:1px;background:var(--border)}
+  .catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+  .catcard{display:flex;flex-direction:column;gap:10px;background:var(--panel2);border:1.5px solid var(--border);
+    border-radius:12px;padding:13px 14px;cursor:pointer;transition:.12s;user-select:none}
+  .catcard:hover{border-color:var(--accent2)}
+  .catcard.on{border-color:var(--accent);background:var(--selbg)}
+  .catcard.mastered{opacity:.68}
+  .catcard.mastered:hover{opacity:1}
+  .cchead{display:flex;align-items:flex-start;gap:10px}
+  .cb{width:20px;height:20px;border-radius:6px;border:2px solid var(--border);flex-shrink:0;display:flex;
+    align-items:center;justify-content:center;background:var(--panel);transition:.12s;margin-top:1px}
+  .catcard.on .cb{background:var(--accent);border-color:var(--accent)}
+  .cb svg{width:13px;height:13px;stroke:white;stroke-width:3;fill:none;opacity:0;transition:.1s}
+  .catcard.on .cb svg{opacity:1}
+  .catname{font-size:.92rem;font-weight:650;color:var(--text);line-height:1.3}
+  .ccfoot{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .catcount{font-size:.76rem;color:var(--muted)}
+  .scorepill{font-size:.74rem;font-weight:700;padding:4px 10px;border-radius:20px;white-space:nowrap;
+    font-variant-numeric:tabular-nums;flex-shrink:0}
+  .scorepill.mastered{background:var(--greenbg);color:var(--green)}
+  .scorepill.partial{background:var(--notebg);color:var(--amber);border:1px solid var(--noteborder)}
+  .scorepill.new{background:transparent;color:var(--muted);border:1px dashed var(--border)}
   .field{margin:14px 0}
   .field label{display:block;font-size:.85rem;color:var(--muted);margin-bottom:7px;font-weight:600}
   .toggle{display:flex;align-items:center;gap:9px;font-size:.9rem;cursor:pointer;padding:6px 0}
@@ -195,7 +220,14 @@
     </div>
     <div id="catBox" class="field">
       <label>Categories</label>
-      <div id="chips" class="chips"></div>
+      <div class="cattoolbar">
+        <a onclick="selectAllCats()">Select all</a>
+        <a onclick="clearCats()">Clear</a>
+        <a onclick="selectUnmasteredCats()">Select what's left to master</a>
+        <span class="count" id="catSelCount"></span>
+      </div>
+      <div id="needsPractice"></div>
+      <div id="masteredGroup"></div>
     </div>
     <div class="field">
       <label>How many questions? <small class="muted">(blank = all)</small></label>
@@ -293,23 +325,68 @@ document.getElementById('qtotal').textContent = QUESTIONS.length;
 
 // categories
 const cats = [...new Set(QUESTIONS.map(q=>q.category))].sort();
-const chipsEl = document.getElementById('chips');
-cats.forEach(c=>{
-  const d=document.createElement('div'); d.className='chip';
-  const label=document.createElement('span'); label.textContent=c+' ('+QUESTIONS.filter(q=>q.category===c).length+')';
-  const badge=document.createElement('span'); badge.dataset.role='badge';
-  d.appendChild(label); d.appendChild(badge);
-  d.dataset.cat=c; d.onclick=()=>{d.classList.toggle('on')}; chipsEl.appendChild(d);
-});
-function applyProgressBadges(progressList){
-  const byCat={}; (progressList||[]).forEach(p=>{ byCat[p.category]=p; });
-  document.querySelectorAll('#chips .chip').forEach(chip=>{
-    const p=byCat[chip.dataset.cat]; const badge=chip.querySelector('[data-role=badge]');
-    if(!p){ badge.textContent=''; return; }
-    if(p.status==='mastered'){ badge.textContent=' ✓'; badge.style.color='var(--green)'; }
-    else{ badge.textContent=' ●'; badge.style.color='var(--amber)'; }
-  });
+const catCount = c => QUESTIONS.filter(q=>q.category===c).length;
+const selectedCats = new Set();
+let lastProgress = [];
+
+function scorePillEl(count, p){
+  const s=document.createElement('span'); s.className='scorepill';
+  if(p && p.status==='mastered'){ s.classList.add('mastered'); s.textContent=`${p.correct}/${count} ✓`; }
+  else if(p){ s.classList.add('partial'); s.textContent=`${p.correct}/${p.attempted}`; }
+  else{ s.classList.add('new'); s.textContent='Not started'; }
+  return s;
 }
+function catCardEl(c, p){
+  const count=catCount(c);
+  const mastered = p && p.status==='mastered';
+  const d=document.createElement('div'); d.className='catcard'+(selectedCats.has(c)?' on':'')+(mastered?' mastered':'');
+  d.dataset.cat=c;
+  d.onclick=()=>{ selectedCats.has(c)?selectedCats.delete(c):selectedCats.add(c); renderCategoryGrid(); };
+  const head=document.createElement('div'); head.className='cchead';
+  const cb=document.createElement('div'); cb.className='cb';
+  cb.innerHTML='<svg viewBox="0 0 24 24"><polyline points="4 12 9 17 20 6"/></svg>';
+  const name=document.createElement('div'); name.className='catname'; name.textContent=c;
+  head.appendChild(cb); head.appendChild(name);
+  const foot=document.createElement('div'); foot.className='ccfoot';
+  const countEl=document.createElement('span'); countEl.className='catcount'; countEl.textContent=`${count} question${count===1?'':'s'}`;
+  foot.appendChild(countEl); foot.appendChild(scorePillEl(count,p));
+  d.appendChild(head); d.appendChild(foot);
+  return d;
+}
+function groupHeaderEl(text){
+  const h=document.createElement('div'); h.className='grouplabel';
+  h.innerHTML=text+' <div class="line"></div>'; return h;
+}
+function renderCategoryGrid(){
+  const byCat={}; lastProgress.forEach(p=>{ byCat[p.category]=p; });
+  const needs = cats.filter(c=>!(byCat[c] && byCat[c].status==='mastered'));
+  const mastered = cats.filter(c=>byCat[c] && byCat[c].status==='mastered');
+
+  const needsEl=document.getElementById('needsPractice'); needsEl.innerHTML='';
+  if(needs.length){
+    needsEl.appendChild(groupHeaderEl('Needs practice'));
+    const grid=document.createElement('div'); grid.className='catgrid';
+    needs.forEach(c=>grid.appendChild(catCardEl(c, byCat[c])));
+    needsEl.appendChild(grid);
+  }
+  const masteredEl=document.getElementById('masteredGroup'); masteredEl.innerHTML='';
+  if(mastered.length){
+    masteredEl.appendChild(groupHeaderEl('Mastered'));
+    const grid=document.createElement('div'); grid.className='catgrid';
+    mastered.forEach(c=>grid.appendChild(catCardEl(c, byCat[c])));
+    masteredEl.appendChild(grid);
+  }
+  document.getElementById('catSelCount').textContent = selectedCats.size ? `${selectedCats.size} selected` : '';
+}
+function selectAllCats(){ cats.forEach(c=>selectedCats.add(c)); renderCategoryGrid(); }
+function clearCats(){ selectedCats.clear(); renderCategoryGrid(); }
+function selectUnmasteredCats(){
+  const byCat={}; lastProgress.forEach(p=>{ byCat[p.category]=p; });
+  selectedCats.clear();
+  cats.filter(c=>!(byCat[c] && byCat[c].status==='mastered')).forEach(c=>selectedCats.add(c));
+  renderCategoryGrid();
+}
+renderCategoryGrid();
 document.querySelectorAll('input[name=mode]').forEach(r=>r.onchange=()=>{
   document.getElementById('catBox').classList.toggle('hide', document.querySelector('input[name=mode]:checked').value!=='cat');
 });
@@ -325,8 +402,7 @@ function buildPool(){
   const mode=document.querySelector('input[name=mode]:checked').value;
   let pool=QUESTIONS.slice();
   if(mode==='cat'){
-    const on=[...document.querySelectorAll('.chip.on')].map(c=>c.dataset.cat);
-    pool=pool.filter(q=>on.includes(q.category));
+    pool=pool.filter(q=>selectedCats.has(q.category));
   }
   if(document.getElementById('shuffleQ').checked) pool=shuffle(pool);
   const n=parseInt(document.getElementById('count').value);
@@ -363,7 +439,8 @@ async function loadProgressAndSession(){
   if(!identity) return;
   try{
     const data=await dataAction('get-all',{identity});
-    applyProgressBadges(data.progress);
+    lastProgress=data.progress||[];
+    renderCategoryGrid();
     if(data.session && data.session.poolIds && data.session.poolIds.length){
       pendingResumeSession=data.session;
       const total=data.session.poolIds.length;
