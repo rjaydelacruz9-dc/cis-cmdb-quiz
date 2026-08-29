@@ -145,6 +145,7 @@
     <div class="spacer"></div>
     <div class="row" style="gap:12px;flex-wrap:nowrap;margin-top:6px">
       <button id="themeToggle" class="flagbtn" onclick="toggleTheme()" title="Toggle light/dark theme">🌙 Dark</button>
+      <button id="soundToggle" class="flagbtn" onclick="toggleSound()" title="Toggle answer sound effects">🔊 Sound</button>
       <button id="manageAccessBtn" class="flagbtn hide" onclick="openAdminPanel()">🛡 Manage access</button>
       <a id="logoutLink" class="link hide" onclick="logout()">Log out</a>
     </div>
@@ -284,6 +285,10 @@
     <div id="qtext" class="qtext"></div>
     <div id="opts"></div>
     <div id="fb" class="feedback"></div>
+    <div id="aiBox" class="hide" style="margin:10px 0">
+      <button id="aiBtn" class="btn ghost" onclick="getAiInsights()">✨ AI insights on this answer</button>
+      <div id="aiResult" class="note hide" style="margin-top:8px;white-space:pre-wrap"></div>
+    </div>
     <div id="noteBox"></div>
     <div class="row" style="margin-top:16px">
       <button id="check" class="btn" onclick="check()">Check answer</button>
@@ -509,6 +514,34 @@ function toggleTheme(){
   applyTheme(saved || (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light'));
 })();
 
+// --- sound effects ---
+let soundOn = localStorage.getItem('quizSound') !== 'off';
+let audioCtx = null;
+function ensureAudioCtx(){
+  if(!audioCtx){ try{ audioCtx = new (window.AudioContext||window.webkitAudioContext)(); }catch(e){} }
+  return audioCtx;
+}
+function tone(freq, start, dur, type, peak){
+  const ctx=ensureAudioCtx(); if(!ctx) return;
+  const osc=ctx.createOscillator(); const gain=ctx.createGain();
+  osc.type=type||'sine'; osc.frequency.value=freq;
+  osc.connect(gain); gain.connect(ctx.destination);
+  const t0=ctx.currentTime+start;
+  gain.gain.setValueAtTime(0.0001, t0);
+  gain.gain.linearRampToValueAtTime(peak||0.16, t0+0.02);
+  gain.gain.exponentialRampToValueAtTime(0.0001, t0+dur);
+  osc.start(t0); osc.stop(t0+dur+0.02);
+}
+function playCorrectSound(){ if(!soundOn) return; tone(659.25,0,0.14,'sine'); tone(987.77,0.10,0.22,'sine'); }
+function playWrongSound(){ if(!soundOn) return; tone(220,0,0.16,'triangle'); tone(174.61,0.09,0.26,'triangle'); }
+function toggleSound(){
+  soundOn=!soundOn;
+  localStorage.setItem('quizSound', soundOn?'on':'off');
+  document.getElementById('soundToggle').textContent = soundOn ? '🔊 Sound' : '🔇 Muted';
+  if(soundOn) tone(659.25,0,0.12,'sine',0.12);
+}
+document.getElementById('soundToggle').textContent = soundOn ? '🔊 Sound' : '🔇 Muted';
+
 // --- auth ---
 function isAuthed(){
   try{
@@ -665,6 +698,9 @@ function render(){
   flagBtn.classList.toggle('on',session.flags.has(cur.id));
   const fb=document.getElementById('fb'); fb.className='feedback'; fb.innerHTML='';
   document.getElementById('noteBox').innerHTML='';
+  document.getElementById('aiBox').classList.add('hide');
+  const aiBtn=document.getElementById('aiBtn'); aiBtn.classList.remove('hide'); aiBtn.disabled=false; aiBtn.textContent='✨ AI insights on this answer';
+  const aiResult=document.getElementById('aiResult'); aiResult.classList.add('hide'); aiResult.textContent='';
   document.getElementById('check').classList.remove('hide');
   document.getElementById('next').classList.add('hide');
   const opts=document.getElementById('opts'); opts.innerHTML='';
@@ -738,6 +774,7 @@ function check(){
 
   const fb=document.getElementById('fb');
   if(session.instant){
+    correct ? playCorrectSound() : playWrongSound();
     fb.className='feedback show '+(correct?'ok':'no');
     let correctHtml='';
     if(cur.type!=='match'){
@@ -746,6 +783,7 @@ function check(){
         : 'Correct: '+cur.options[cur.correct[0]];
     }
     fb.innerHTML='<b>'+(correct?'✓ Correct':'✗ Not quite')+'</b>'+correctHtml;
+    document.getElementById('aiBox').classList.remove('hide');
   }
   if(cur.note){
     document.getElementById('noteBox').innerHTML='<div class="note">⚠ '+cur.note+'</div>';
@@ -753,6 +791,44 @@ function check(){
   document.getElementById('check').classList.add('hide');
   const nx=document.getElementById('next'); nx.classList.remove('hide');
   nx.textContent = session.i+1>=session.pool.length ? 'See results →' : 'Next →';
+}
+
+// --- AI insights ---
+function buildExplainContext(){
+  if(!cur) return '';
+  let s=`Category: ${cur.category}\nQuestion type: ${cur.type}\nQuestion: ${cur.question}\n\n`;
+  if(cur.type==='match'){
+    s+='Correct matches:\n'+cur.pairs.map(p=>`- ${p[0]} -> ${p[1]}`).join('\n')+'\n\n';
+    s+="Learner's matches:\n"+[...document.querySelectorAll('.matchrow')].map(r=>{
+      const idx=+r.dataset.idx; const left=cur.pairs[idx][0];
+      const chosen=decodeURIComponent(r.querySelector('select').value||'(none)');
+      return `- ${left} -> ${chosen}`;
+    }).join('\n');
+  } else {
+    s+='Options:\n'+cur.options.map((o,i)=>`${i+1}. ${o}`).join('\n')+'\n\n';
+    s+='Correct answer(s): '+cur.correct.map(i=>cur.options[i]).join('; ')+'\n';
+    const picked=[...document.querySelectorAll('#opts input')].filter(i=>i.checked).map(i=>cur.options[+i.value]);
+    s+='Learner picked: '+(picked.length?picked.join('; '):'(nothing)');
+  }
+  return s;
+}
+async function getAiInsights(){
+  const btn=document.getElementById('aiBtn');
+  const out=document.getElementById('aiResult');
+  btn.disabled=true; btn.textContent='Thinking…';
+  try{
+    const summary=buildExplainContext();
+    const r=await fetch('/api/explain',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({summary})});
+    const data=await r.json().catch(()=>({}));
+    if(!r.ok) throw new Error(data.error||'Could not get insights.');
+    out.textContent=data.explanation;
+    out.classList.remove('hide');
+    btn.classList.add('hide');
+  }catch(e){
+    out.textContent='⚠ '+e.message;
+    out.classList.remove('hide');
+    btn.disabled=false; btn.textContent='✨ AI insights on this answer';
+  }
 }
 
 function next(){

@@ -10,6 +10,8 @@ A single-file, self-contained interactive practice quiz for the ServiceNow
 - Login gate: sign in with an emailed one-time code, or a local admin/password.
 - Progress tracking (Supabase-backed): per-category mastery badges, and a "resume where you
   left off" prompt if you close the app mid-quiz.
+- Sound effects on check (mutable via the header toggle), and an on-demand **AI insights**
+  button that explains the correct answer using Claude.
 
 ## Run locally
 Open `index.html` in any browser. The quiz itself needs no build step or server.
@@ -79,6 +81,24 @@ progress purposes — it's what ties saved data to you.
 Without these two variables, the app still works exactly as before — badges just won't
 appear and there's nothing to resume, since `api/data.js` calls fail silently (caught and
 logged to the console, not shown to you) rather than blocking quiz-taking.
+
+## Sound effects & AI insights
+Sound effects (a short chime on correct, a lower buzz on wrong) play only when "Show
+right/wrong immediately" is on, and only in that instant-feedback moment — same gate as the
+right/wrong feedback itself, so a muted-feedback run stays silent too. Toggle them off entirely
+with **🔊 Sound** in the header; the choice persists in `localStorage`.
+
+After checking an answer, an **✨ AI insights on this answer** button appears alongside the
+feedback. It sends the question, options, correct answer, and what you picked to
+`api/explain.js`, which asks Claude for a short (3–5 sentence) explanation of why the correct
+answer is right and why the others aren't — useful for the "I got it right/wrong but don't
+know why" moments.
+
+### Required Vercel environment variable
+- `ANTHROPIC_API_KEY` — a Claude API key from [console.anthropic.com](https://console.anthropic.com).
+  Without it, the insights button shows an error when clicked but nothing else in the app is
+  affected.
+- `ANTHROPIC_MODEL` (optional) — defaults to `claude-sonnet-5`.
 
 ## Deploy (Vercel)
 This repo is a static site with serverless functions under `api/` (`lib/` holds shared
