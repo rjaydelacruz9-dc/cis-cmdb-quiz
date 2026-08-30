@@ -115,9 +115,28 @@ login gate above already controlling access, there's no need for Vercel's extra 
 All questions are embedded as a JSON array in the `<script>` block of `index.html`
 (the `const QUESTIONS = [...]` line). Edit there, commit, and push.
 
-## Notes on flagged answers
-Three questions carry an in-app ⚠ note where the source answer keys were
-inconsistent or conflict with ServiceNow documentation:
-- Application-to-server relationship (`Runs::Runs On` vs `Runs on::Runs`)
-- "Purpose of CMDB Data Manager"
-- "Policy types created within CMDB Data Manager"
+## Answer corrections
+Eight questions were corrected after a full review of the bank against ServiceNow
+CSDM/CMDB behaviour. In most cases the original answer was disproved by another
+question in this same quiz — both could not be right:
+
+| Q | Was | Now | Why |
+|---|---|---|---|
+| 32 | "uses automation to remediate" | "provides playbooks to assist" | Q40/Q41/Q42 all mark automated remediation as wrong |
+| 58 | De-duplication + Archive | Archive + Retire | Q53 lists the five policy types; de-duplication isn't one |
+| 67 | enforces relationship rules | automates archival/deletion | Q48/Q57/Q59/Q61/Q68 all describe lifecycle, not relationships |
+| 96 | ServiceNow can't update others | Altiris can update SCCM records | lower priority number = higher authority in IRE |
+| 108 | Class Switch | Class Upgrade | Q109 calls the same parent→descendant move an upgrade |
+| 120 | existing CI reconciled | a new CI is created | Version is a match criterion, so a change breaks the match |
+| 142 | Technology Management Service | …Service **Offering** | Q143/Q144/Q145 all point to the Offering |
+| 176 | "non-CMDB classes" → `…multisource_cmdb_ci_enabled` | → `…multisource_non_cmdb_ci_enabled` | Q89 lists both properties; name and description contradicted |
+
+For Q176 the previously-paired property was kept as a dropdown distractor, so the wrong
+choice is still selectable.
+
+### Still flagged
+One question keeps its in-app ⚠ note, left as-is pending a call on the source:
+- **Application-to-server relationship** (`Runs::Runs On` vs `Runs on::Runs`). ServiceNow
+  names relationship types `parent_descriptor::child_descriptor`, which argues for
+  `Runs on::Runs` ("Application runs on Server"), but two of the three source screenshots
+  mark the other. Unchanged until verified.
