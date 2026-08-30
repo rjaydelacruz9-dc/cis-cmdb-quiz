@@ -299,8 +299,10 @@
       </div>
     </div>
     <div id="noteBox"></div>
+    <div id="retryNote" class="note hide">↻ Practice attempt — your first answer is already recorded, so this won't change your score.</div>
     <div class="row" style="margin-top:16px">
       <button id="check" class="btn" onclick="check()">Check answer</button>
+      <button id="retry" class="btn ghost hide" onclick="tryAgain()">↻ Try again</button>
       <button id="next" class="btn hide" onclick="next()">Next →</button>
     </div>
   </div>
@@ -707,9 +709,12 @@ if(isAuthed()){
   loadProgressAndSession();
 } else show('login');
 
-let cur, curOrder, answered;
+let cur, curOrder, answered, retryMode=false;
 function render(){
   answered=false;
+  retryMode=false;
+  document.getElementById('retry').classList.add('hide');
+  document.getElementById('retryNote').classList.add('hide');
   cur=session.pool[session.i];
   document.getElementById('counter').textContent=`Question ${session.i+1} of ${session.pool.length}`;
   document.getElementById('bar').style.width=((session.i)/session.pool.length*100)+'%';
@@ -793,11 +798,16 @@ function check(){
     });
   }
   answered=true;
-  session.results.push({id:cur.id, correct});
-  if(correct){session.correct++; store.wrongIds=store.wrongIds.filter(x=>x!==cur.id);}
-  else {session.wrong++; if(!store.wrongIds.includes(cur.id)) store.wrongIds.push(cur.id);}
-  save();
-  saveSessionSnapshot();
+  // A retry is practice only: the first attempt is already scored, so nothing here
+  // may touch session totals, session.results, or store.wrongIds — those drive both
+  // the results screen and per-category mastery.
+  if(!retryMode){
+    session.results.push({id:cur.id, correct});
+    if(correct){session.correct++; store.wrongIds=store.wrongIds.filter(x=>x!==cur.id);}
+    else {session.wrong++; if(!store.wrongIds.includes(cur.id)) store.wrongIds.push(cur.id);}
+    save();
+    saveSessionSnapshot();
+  }
 
   const fb=document.getElementById('fb');
   if(session.instant){
@@ -817,8 +827,44 @@ function check(){
     document.getElementById('noteBox').innerHTML='<div class="note">⚠ '+cur.note+'</div>';
   }
   document.getElementById('check').classList.add('hide');
+  // offer another go only while the answer is still wrong
+  document.getElementById('retry').classList.toggle('hide', correct);
   const nx=document.getElementById('next'); nx.classList.remove('hide');
   nx.textContent = session.i+1>=session.pool.length ? 'See results →' : 'Next →';
+}
+
+// Re-open the current question for another attempt. Purely for practice: check()
+// skips all scoring while retryMode is set, so totals, the wrong-answer list and
+// category mastery all keep the result of the first attempt.
+function tryAgain(){
+  retryMode=true;
+  answered=false;
+
+  if(cur.type==='match'){
+    document.querySelectorAll('.matchrow').forEach(r=>{
+      r.classList.remove('correct','wrong');
+      const sel=r.querySelector('select'); sel.disabled=false; sel.value='';
+      const ans=r.querySelector('.matchans'); if(ans) ans.remove();
+    });
+  } else {
+    document.querySelectorAll('#opts label').forEach(lab=>{
+      lab.classList.remove('sel','correct','wrong');
+      const inp=lab.querySelector('input'); inp.disabled=false; inp.checked=false;
+    });
+  }
+
+  const fb=document.getElementById('fb'); fb.className='feedback'; fb.innerHTML='';
+  document.getElementById('fbRow').classList.remove('wrong');
+  document.getElementById('noteBox').innerHTML='';
+  document.getElementById('aiBox').classList.add('hide');
+  const aiBtn=document.getElementById('aiBtn');
+  aiBtn.classList.remove('hide'); aiBtn.disabled=false; aiBtn.textContent='✨ AI insights on this answer';
+  const aiResult=document.getElementById('aiResult'); aiResult.classList.add('hide'); aiResult.textContent='';
+
+  document.getElementById('retryNote').classList.remove('hide');
+  document.getElementById('retry').classList.add('hide');
+  document.getElementById('next').classList.add('hide');
+  document.getElementById('check').classList.remove('hide');
 }
 
 // --- AI insights ---
