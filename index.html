@@ -100,7 +100,8 @@
     margin:16px 0 8px;display:flex;align-items:center;gap:8px}
   .grouplabel:first-of-type{margin-top:8px}
   .grouplabel .line{flex:1;height:1px;background:var(--border)}
-  .catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:10px}
+  /* min() keeps the track from forcing overflow on very narrow viewports */
+  .catgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(210px,100%),1fr));gap:10px}
   .catcard{display:flex;flex-direction:column;gap:10px;background:var(--panel2);border:1.5px solid var(--border);
     border-radius:12px;padding:13px 14px;cursor:pointer;transition:.12s;user-select:none}
   .catcard:hover{border-color:var(--accent2)}
@@ -175,7 +176,7 @@
     .reftable .r>div:first-child{padding-top:12px}
     .reftable .r>div:last-child{padding-bottom:12px;color:var(--muted);font-size:.84rem}
   }
-  .refgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:18px}
+  .refgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(min(270px,100%),1fr));gap:12px;margin-bottom:18px}
   .refcard{background:var(--panel2);border:1px solid var(--border);border-left:4px solid var(--border);
     border-radius:11px;padding:15px 17px}
   .refcard h4{margin:0 0 2px;font-size:1.05rem;line-height:1.2}
@@ -198,6 +199,20 @@
     color:var(--text);font-weight:600}
   .ref ol{padding-left:20px;margin:0}
   .ref ol li{margin-bottom:11px;font-size:.92rem;color:var(--muted)}
+  /* open-findings tab */
+  .fhd{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:7px}
+  .tierbadge{font-size:.63rem;text-transform:uppercase;letter-spacing:.06em;font-weight:700;
+    padding:3px 9px;border-radius:20px;margin-left:auto;white-space:nowrap}
+  .fswap{display:grid;gap:7px;margin:10px 0}
+  @media (min-width:560px){ .fswap{grid-template-columns:1fr 1fr} }
+  .fswap > div{border-radius:8px;padding:9px 11px;font-size:.84rem;line-height:1.4}
+  .fswap .now{background:var(--redbg);color:var(--red)}
+  .fswap .sug{background:var(--greenbg);color:var(--green)}
+  .fswap .lbl{display:block;font-size:.6rem;text-transform:uppercase;letter-spacing:.08em;
+    opacity:.85;margin-bottom:3px;font-weight:700}
+  .fixedbox{background:var(--greenbg);border:1px solid var(--green);border-radius:10px;
+    padding:13px 16px;margin-bottom:18px;font-size:.89rem;color:var(--green)}
+  .fixedbox b{color:var(--green)}
 </style>
 </head>
 <body>
@@ -324,9 +339,11 @@
     <div class="chips" style="margin-bottom:6px">
       <div id="refTabDomains" class="chip on" onclick="setRefTab('domains')">The 5 domains</div>
       <div id="refTabStages" class="chip" onclick="setRefTab('stages')">Crawl · Walk · Run · Fly</div>
+      <div id="refTabOpen" class="chip" onclick="setRefTab('open')">Open findings · <span id="openCount"></span></div>
     </div>
     <div id="refDomains"></div>
     <div id="refStages" class="hide"></div>
+    <div id="refOpen" class="hide"></div>
   </div>
 
   <!-- ADMIN PANEL -->
@@ -840,18 +857,141 @@ function renderReference(){
     </div>`;
 }
 
+// Findings from the full review of all 186 questions that are still UNRESOLVED.
+// The 8 confirmed-wrong ones were corrected in the bank and are deliberately absent.
+const OPEN_FINDINGS = [
+  { tier:'probable', id:7, cat:'CSDM & Domains',
+    q:'Which stage of CSDM maps what Application Services a Business Service Offering depends on?',
+    now:'Walk', sug:'Run',
+    why:'Application Services are Build-domain objects, populated at Run. Walk is where Technical Services and their Offerings get built — which Q10 confirms by putting them on the Walk tab. Q7 and Q143 look like a straight swap of each other.' },
+  { tier:'probable', id:143, cat:'Change / Incident / Event',
+    q:'What CSDM stage uses Technology Management Offerings to populate the support group of CIs?',
+    now:'Run', sug:'Walk',
+    why:'Q10 places Technology Management Services and Offerings on the Walk tab, and Q13 describes Walk as the stage enabling service-aware impact assessment. Attaching support groups via Technical Service Offerings is Walk-stage work.' },
+  { tier:'probable', id:123, cat:'Identification & CI Class Manager',
+    q:'What is the relationship between an application and a server?',
+    now:'Application > Runs::Runs On > Server', sug:'Application > Runs on::Runs > Server',
+    why:'ServiceNow names a relationship type parent_descriptor::child_descriptor. With Application as parent, the correct reading is “Application runs on Server / Server runs Application”. The marked answer inverts the dependency. Source screenshots disagree 2-to-1 in favour of the marked one, hence not confirmed.' },
+  { tier:'probable', id:133, cat:'Ingestion & Connectors',
+    q:'Which script type ensures import-set data is processed through the IRE?',
+    now:'onAfter', sug:'onBefore',
+    why:'The documented pattern is an onBefore transform script calling CMDBTransformUtil, then setting ignore = true so the default transform does not write straight to the CI table. It must run before the save to intercept it.' },
+  { tier:'probable', id:145, cat:'Change / Incident / Event',
+    q:'Which groups sync to CIs from a Technical Service Offering related to a Dynamic CI Group?',
+    now:'Support Group + Owned by Group', sug:'Support Group + Change Group',
+    why:'Q144 is effectively the same question and answers Change group + Support group. Q146–Q148 all turn on Change Group reaching a Change Request and Support Group reaching an Incident. Owned by Group plays no part.' },
+  { tier:'probable', id:173, cat:'CSDM & Domains',
+    q:'Match the application service type to its description.',
+    now:'Tag-Based → custom-built apps; Connection Suggestion → cloud/container/VM', sug:'Swap them',
+    why:'Tag-based mapping groups cloud resources using provider tags, so it is the recommendation for cloud, container and VM estates. Connection-suggestion mapping builds maps from observed traffic — the fallback for custom apps with no pattern.' },
+  { tier:'probable', id:93, cat:'CMDB 360 / Multisource',
+    q:'Which Dynamic Rule Types are available in the Create Reconciliation Rule wizard?',
+    now:'Most Reported + Last Updated', sug:'Likely also Smallest Value',
+    why:'Q95 builds a whole scenario on a “largest value” dynamic reconciliation rule, so value-comparison types clearly exist. Largest and smallest are a natural pair, making the rejection of Smallest Value hard to justify. Confirm against your instance.' },
+
+  { tier:'possible', id:77, cat:'CMDB Workspace & Maps',
+    q:'What actions can be initiated from the CMDB Workspace?',
+    now:'Certification policy marked NOT an action', sug:'Arguably it is one',
+    why:'Q62 states that a Data Manager creates, publishes and manages policies from the CMDB Workspace Management tab. The counter-reading is that the source wanted only two answers and treats policy creation as a Data Manager action merely surfaced there.' },
+  { tier:'possible', id:156, cat:'CMDB Groups & Queries',
+    q:'Which steps build a Query Builder query for app services with a database that has incidents?',
+    now:'Service Mapping Query to find incidents', sug:'Add the non-CMDB Incident table',
+    why:'Q157 poses nearly the same problem and answers it by adding the Incident table from the Non-CMDB Tables list — the option this question rejects. A Service Mapping Query traverses service topology; it is not how incidents are pulled in.' },
+  { tier:'possible', id:183, cat:'CSDM & Domains',
+    q:'Drag the CMDB objects to the correct CSDM domains.',
+    now:'Application Service → Service Delivery', sug:'Build & Integration — not offered',
+    why:'Application Service is a Build-domain object, but the question only offers Foundation, Design, Service Delivery and Sell/Consume. There is no correct option, so this needs a fifth option added rather than an answer flipped.' },
+  { tier:'possible', id:79, cat:'CMDB Workspace & Maps',
+    q:'Which tool shows how CIs are connected to each other in the CMDB Workspace?',
+    now:'Relationship Map', sug:'Possibly Unified Map',
+    why:'Q80–Q84 all treat the Unified Map as the CMDB Workspace tool for viewing CI connections. If Relationship Map is a distinct legacy view the source tests separately the answer stands; otherwise this is inconsistent with its neighbours.' },
+  { tier:'possible', id:153, cat:'Change / Incident / Event',
+    q:'How does a healthcare provider determine the users impacted by a critical incident?',
+    now:'Affected CI [task_ci] related list', sug:'Possibly Service Offerings by Department or Location',
+    why:'The question asks who is impacted, not what. Affected CI enumerates configuration items and says nothing about the consumer population; Service Offerings by Department or Location is what ties an offering to its consumers.' },
+
+  { tier:'minor', id:31, cat:'CMDB Health Dashboard',
+    q:'How are Health Inclusion Rules utilised by the IRE?',
+    now:'Narrow the scope of the identification process', sug:'Best of three, but premise is wrong',
+    why:'Health Inclusion Rules scope which CIs count towards CMDB health metrics — that is how Q26 and Q28 use them. They are not consumed by the IRE at all, so the question would be better reworded than re-keyed.' },
+  { tier:'minor', id:76, cat:'De-duplication',
+    q:'How to prevent duplicate CI creation from import sets loading vendor files?',
+    now:'Set coalesce on two transform-map mappings', sug:'Possibly CMDBTransformUtil API',
+    why:'For CMDB data the documented approach is routing through the IRE, which is the point of Q133 and Q134. Coalescing is a real import-set technique though, so if the source means generic import behaviour the current answer holds.' },
+  { tier:'minor', id:29, cat:'CMDB Health Dashboard',
+    q:'What must be configured for the Compliance Scorecard to show servers not on the latest patch?',
+    now:'Certification Policies, Data Filters, Scheduled Jobs', sug:'Possibly Certification Filter, Template, Audit',
+    why:'Compliance is fed by the Audit sub-metric, which compares actual values to a template — the Certification Filter / Template / Audit chain, matching how Q181 defines Audit. The marked answer uses newer Data Manager language, so this may be version-dependent.' },
+  { tier:'minor', id:47, cat:'Data Foundation Dashboard',
+    q:'Which remediation plays run the “Services Have Owners Identified” playbook?',
+    now:'Govern Data + Fix Data', sug:'Possibly also Analyze Data',
+    why:'Get-Well playbooks generally follow analyse → fix → govern, which makes excluding Analyze Data look odd when “Report Data” is the obvious decoy. This playbook may genuinely ship only two plays — confirm against the playbook itself.' },
+  { tier:'minor', id:179, cat:'Governance & General',
+    q:'Drag the domain to the roles that make up the governance team.',
+    now:'Technical → Enterprise Architects; Foundation → Service Owners', sug:'Unresolved',
+    why:'Enterprise Architects appear against both Design and Technical, and Foundation — where master data lives — gets Service Owners rather than Data Stewards. Reads as partially shuffled, but role frameworks vary between ServiceNow publications.' }
+];
+
+const TIER_META = {
+  probable:{ label:'Probably wrong', colour:'var(--amber)', bg:'var(--notebg)',
+             blurb:'Strong reasoning, resting on documented ServiceNow behaviour or a near-duplicate question answering differently. Verify, then change.' },
+  possible:{ label:'Possibly wrong', colour:'var(--accent2)', bg:'var(--selbg)',
+             blurb:'Real inconsistencies, but each has a reading under which the current answer survives — often because the question itself is imprecise.' },
+  minor:{ label:'Minor / verify', colour:'var(--muted)', bg:'var(--panel2)',
+          blurb:'Wording problems rather than clear errors, or areas where confidence in the exact ServiceNow terminology is not high enough to call it.' }
+};
+
+function renderOpenFindings(){
+  const order=['probable','possible','minor'];
+  const html = order.map(t=>{
+    const items=OPEN_FINDINGS.filter(f=>f.tier===t);
+    const m=TIER_META[t];
+    return `<h3 style="color:${m.colour}">${m.label} · ${items.length}</h3>
+      <p>${m.blurb}</p>
+      <div class="refgrid">${items.map(f=>`
+        <div class="refcard" style="border-left-color:${m.colour}">
+          <div class="fhd">
+            <span class="qtag">Q${f.id}</span>
+            <span class="sub" style="margin:0">${f.cat}</span>
+            <span class="tierbadge" style="background:${m.bg};color:${m.colour}">${m.label}</span>
+          </div>
+          <p class="body" style="color:var(--text);font-weight:600">${f.q}</p>
+          <div class="fswap">
+            <div class="now"><span class="lbl">Marked now</span>${f.now}</div>
+            <div class="sug"><span class="lbl">Suggested</span>${f.sug}</div>
+          </div>
+          <div class="not">${f.why}</div>
+        </div>`).join('')}</div>`;
+  }).join('');
+
+  document.getElementById('refOpen').innerHTML = `
+    <div class="ref">
+      <div class="hero">
+        <div class="big">${OPEN_FINDINGS.length} answers still worth a second look.</div>
+        <p>All 186 questions were reviewed against ServiceNow CSDM/CMDB behaviour and against the bank's own internal consistency. These are the ones left <b>unresolved</b> — the answers below are still live in the quiz, so answer what it expects to score the point.</p>
+      </div>
+      <div class="fixedbox">✓ <b>8 confirmed-wrong answers have already been corrected</b> — Q32, Q58, Q67, Q96, Q108, Q120, Q142 and Q176. Each was disproved by another question in this same bank. They are not listed below.</div>
+      ${html}
+    </div>`;
+  document.getElementById('openCount').textContent = OPEN_FINDINGS.length;
+}
+
 function setRefTab(tab){
-  document.getElementById('refTabDomains').classList.toggle('on', tab==='domains');
-  document.getElementById('refTabStages').classList.toggle('on', tab==='stages');
-  document.getElementById('refDomains').classList.toggle('hide', tab!=='domains');
-  document.getElementById('refStages').classList.toggle('hide', tab!=='stages');
+  [['domains','refTabDomains','refDomains'],
+   ['stages','refTabStages','refStages'],
+   ['open','refTabOpen','refOpen']].forEach(([name,btn,panel])=>{
+    document.getElementById(btn).classList.toggle('on', tab===name);
+    document.getElementById(panel).classList.toggle('hide', tab!==name);
+  });
   window.scrollTo({top:0, behavior:'smooth'});
 }
 function openReference(){
-  if(!document.getElementById('refDomains').innerHTML) renderReference();
+  if(!document.getElementById('refDomains').innerHTML){ renderReference(); renderOpenFindings(); }
   show('reference');
   window.scrollTo({top:0});
 }
+// the tab label carries the count, so fill it in on load rather than on first open
+document.getElementById('openCount').textContent = OPEN_FINDINGS.length;
 
 // --- auth ---
 function isAuthed(){
