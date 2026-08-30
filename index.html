@@ -13,6 +13,8 @@
     --notebg:#fef3c7; --noteborder:#fde68a; --notetext:#92400e;
     --tagbg:#e0f2fe; --tagmultibg:#fef3c7; --tagmatchbg:#f3e8ff;
     --btntext:#ffffff; --bodygrad:linear-gradient(160deg,#eef2f7,#f8fafc 40%,#eef4fb); --shadow:rgba(0,0,0,.08);
+    /* CSDM domain colours — each stage reuses the colour of the domain it populates */
+    --d-found:#7a7266; --d-design:#6d4aa8; --d-build:#b06a1f; --d-deliv:#0f7168; --d-sell:#b03b60;
   }
   :root[data-theme="dark"]{
     --bg:#0f172a; --panel:#1e293b; --panel2:#243449; --text:#e2e8f0; --muted:#94a3b8;
@@ -22,6 +24,7 @@
     --notebg:#2a220f; --noteborder:#4a3a12; --notetext:var(--amber);
     --tagbg:#1c3346; --tagmultibg:#3a2c0f; --tagmatchbg:#33184d;
     --btntext:#04222f; --bodygrad:linear-gradient(160deg,#0b1220,#0f172a 40%,#111c30); --shadow:rgba(0,0,0,.35);
+    --d-found:#b8b0a3; --d-design:#b79bea; --d-build:#e0a154; --d-deliv:#4fc0b2; --d-sell:#e8829f;
   }
   *{box-sizing:border-box}
   body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -139,6 +142,62 @@
   small.muted{color:var(--muted)}
   a.link{color:var(--accent);cursor:pointer;text-decoration:underline}
   .kbd{font-size:.75rem;color:var(--muted);margin-top:14px;text-align:center}
+
+  /* pill chips — used by the login tabs, the Manage access lists and the reference tabs */
+  .chips{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}
+  .chip{font-size:.82rem;padding:7px 12px;border-radius:20px;border:1.5px solid var(--border);
+    background:var(--panel2);cursor:pointer;user-select:none;transition:.12s}
+  .chip:hover{border-color:var(--accent2)}
+  .chip.on{background:var(--selbg);border-color:var(--accent);color:var(--chipontext)}
+
+  /* ---- reference page ---- */
+  .ref h3{font-size:1.12rem;margin:26px 0 8px;line-height:1.25}
+  .ref h3:first-child{margin-top:6px}
+  .ref p{margin:0 0 14px;color:var(--muted);font-size:.93rem}
+  .ref p b,.ref li b{color:var(--text)}
+  .ref .hero{background:var(--panel2);border-radius:11px;padding:16px 18px;margin-bottom:8px}
+  .ref .hero .big{font-size:1.06rem;font-weight:650;color:var(--text);margin-bottom:6px;line-height:1.4}
+  .ref .hero p:last-child{margin-bottom:0}
+  .reftable{display:grid;gap:1px;background:var(--border);border:1px solid var(--border);
+    border-radius:10px;overflow:hidden;margin:0 0 18px}
+  .reftable .r{display:grid;gap:1px}
+  .reftable.c3 .r{grid-template-columns:minmax(112px,.8fr) 1.3fr 1fr}
+  .reftable.c4 .r{grid-template-columns:minmax(92px,.6fr) 1fr 1fr 1fr}
+  .reftable .r>div{background:var(--panel);padding:11px 13px;font-size:.87rem}
+  .reftable .hd>div{background:var(--panel2);font-size:.66rem;text-transform:uppercase;
+    letter-spacing:.07em;color:var(--muted);font-weight:700}
+  .reftable .nm{font-weight:650}
+  .reftable .it{font-style:italic}
+  @media (max-width:700px){
+    .reftable .hd{display:none}
+    .reftable.c3 .r,.reftable.c4 .r{grid-template-columns:1fr}
+    .reftable .r>div{padding:5px 13px}
+    .reftable .r>div:first-child{padding-top:12px}
+    .reftable .r>div:last-child{padding-bottom:12px;color:var(--muted);font-size:.84rem}
+  }
+  .refgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(270px,1fr));gap:12px;margin-bottom:18px}
+  .refcard{background:var(--panel2);border:1px solid var(--border);border-left:4px solid var(--border);
+    border-radius:11px;padding:15px 17px}
+  .refcard h4{margin:0 0 2px;font-size:1.05rem;line-height:1.2}
+  .refcard .sub{font-size:.68rem;text-transform:uppercase;letter-spacing:.06em;color:var(--muted);
+    display:block;margin-bottom:9px}
+  .refcard .asks{font-style:italic;color:var(--muted);font-size:.88rem;margin:0 0 10px}
+  .refcard ul{margin:0 0 10px;padding-left:17px}
+  .refcard li{font-size:.86rem;margin-bottom:2px}
+  .refcard .lb{font-size:.62rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted);
+    font-weight:700;display:block;margin-bottom:4px}
+  .refcard .body{font-size:.87rem;color:var(--muted);margin:0 0 10px}
+  .refcard .not{background:var(--panel);border-radius:8px;padding:9px 11px;font-size:.83rem;color:var(--muted)}
+  .refnote{background:var(--notebg);border:1px solid var(--noteborder);border-left:3px solid var(--amber);
+    border-radius:0 9px 9px 0;padding:14px 16px;margin:20px 0 0}
+  .refnote h4{margin:0 0 6px;font-size:.98rem;color:var(--notetext)}
+  .refnote p{margin:0 0 8px;font-size:.88rem;color:var(--notetext);opacity:.92}
+  .refnote p:last-child{margin-bottom:0}
+  .refnote b{color:var(--notetext);font-weight:700}
+  .qtag{font-size:.8rem;background:var(--panel);padding:1px 6px;border-radius:4px;
+    color:var(--text);font-weight:600}
+  .ref ol{padding-left:20px;margin:0}
+  .ref ol li{margin-bottom:11px;font-size:.92rem;color:var(--muted)}
 </style>
 </head>
 <body>
@@ -249,7 +308,25 @@
     <div id="resumeBox" class="hide" style="margin-top:14px">
       <button class="btn ghost wide" onclick="resumeWrong()">↻ Review only the <span id="wrongCount"></span> I've gotten wrong before</button>
     </div>
+    <div style="margin-top:10px">
+      <button class="btn ghost wide" onclick="openReference()">📖 Reference — CSDM domains &amp; stages</button>
+    </div>
     <div class="kbd">Tip: press <b>1–6</b> to pick options, <b>Enter</b> to check / continue.</div>
+  </div>
+
+  <!-- REFERENCE -->
+  <div id="reference" class="card hide">
+    <div class="row" style="margin-bottom:14px">
+      <label style="font-weight:700;color:var(--muted)">Reference</label>
+      <div class="spacer"></div>
+      <button class="btn ghost" onclick="show('start')">← Back</button>
+    </div>
+    <div class="chips" style="margin-bottom:6px">
+      <div id="refTabDomains" class="chip on" onclick="setRefTab('domains')">The 5 domains</div>
+      <div id="refTabStages" class="chip" onclick="setRefTab('stages')">Crawl · Walk · Run · Fly</div>
+    </div>
+    <div id="refDomains"></div>
+    <div id="refStages" class="hide"></div>
   </div>
 
   <!-- ADMIN PANEL -->
@@ -439,7 +516,7 @@ function resumeWrong(){
   session={pool:shuffle(pool), i:0, correct:0, wrong:0, results:[], instant:true, shuffleO:true, flags:new Set()};
   show('quiz'); render();
 }
-function show(id){['login','start','quiz','results','adminPanel'].forEach(x=>document.getElementById(x).classList.toggle('hide',x!==id));}
+function show(id){['login','start','quiz','results','adminPanel','reference'].forEach(x=>document.getElementById(x).classList.toggle('hide',x!==id));}
 
 // --- progress + resume sync (Supabase-backed via /api/data) ---
 function getIdentity(){ return localStorage.getItem('quizIdentity'); }
@@ -568,6 +645,213 @@ function toggleCategory(){
   applyCatVisibility();
 }
 applyCatVisibility();
+
+// --- reference pages ---
+const DOMAIN_DATA = [
+  { k:'found', name:'Foundation', sub:'Foundation domain',
+    asks:'“Where is it, who owns it, and what model is it?”',
+    lives:['Company, Location, Department','Business Unit, Cost Center','User, Group','Product Model, Vendor'],
+    why:'The shared reference data every other domain points at. It describes the organisation, not the technology.',
+    not:'<b>Not</b> where services live. Nothing in Foundation is something you can request, support or deploy.' },
+  { k:'design', name:'Design &amp; Planning', sub:'“Design” domain',
+    asks:'“What should we be investing in, and where are we duplicating effort?”',
+    lives:['Business Capability','Business Application','Information Object','Product'],
+    why:'The architect’s view. Objects here support decisions — rationalise overlapping apps, track cost, plan a roadmap, record what regulated data an app holds.',
+    not:'<b>Not</b> anything running. A Business Application here is a portfolio entry, not a deployed instance.' },
+  { k:'build', name:'Build &amp; Integration', sub:'“Build” domain',
+    asks:'“What did we actually deploy, and what is it made of?”',
+    lives:['Application Service','The software and infrastructure CIs it maps to','Service maps and relationships'],
+    why:'Reality as deployed. An Application Service is the logical representation of a running stack — discovered by Service Mapping, tag-based mapping, or a Dynamic CI Group.',
+    not:'<b>Not</b> the funding or planning view of the app — that’s the Business Application in Design.' },
+  { k:'deliv', name:'Service Delivery', sub:'aka Manage Technical Services',
+    asks:'“Who supports this, and what breaks if it fails?”',
+    lives:['Technology Management Service (Technical Service)','Technology Management Offering','Dynamic CI Groups','The infrastructure CIs beneath them'],
+    why:'The operational backbone. This is where support and change groups attach to CIs, which is what makes assignment groups auto-populate on an Incident or Change.',
+    not:'<b>Not</b> business-facing. Technical services are published to Service Owners, not end users.' },
+  { k:'sell', name:'Service Consumption', sub:'aka Sell / Consume',
+    asks:'“What can I request, and what will it cost me?”',
+    lives:['Business Service','Service Offering / Business Service Offering','Service Portfolio','Catalog items'],
+    why:'The consumer-facing shop front. Everything here has an audience, an owner, a cost and a criticality. This is where Service Portfolio Management works.',
+    not:'<b>Not</b> how the service is delivered. The machinery underneath belongs to Service Delivery and Build.' }
+];
+
+const STAGE_DATA = [
+  { k:'found', step:'Prerequisite', name:'Foundation', domain:'Foundation domain',
+    gist:'Not really a stage — the reference data everything else points at. Get it wrong and every later stage inherits the mess.',
+    pop:['Company, Location, Department, Business Unit, Cost Center','User, Group','Product Model, Vendor'],
+    unlocks:'Nothing service-aware on its own. But a CI with no location or support group is unusable at Walk.' },
+  { k:'sell', step:'Stage 1', name:'Crawl', domain:'Sell / Consume',
+    gist:'Define what the business actually consumes. Services and offerings first, before any infrastructure detail.',
+    pop:['Business Service','Service Offering / Business Service Offering','Service Portfolio','Catalog items'],
+    unlocks:'A service portfolio you can publish and request against. Not yet “what breaks if this server dies”. Driven by the Business Service Manager and Technology Service Owner.' },
+  { k:'deliv', step:'Stage 2', name:'Walk', domain:'Service Delivery',
+    gist:'Introduce the technical services sitting under the business services, and attach real CIs to them.',
+    pop:['Technology Management Service','Technology Management Offering','Dynamic CI Groups','Infrastructure CIs related to those offerings'],
+    unlocks:'Impact assessment for incident, problem and change against Business Services — plus automatic Support Group / Change Group on CIs, which is what auto-populates assignment groups.' },
+  { k:'build', step:'Stage 3', name:'Run', domain:'Build &amp; Integration',
+    gist:'Map the applications themselves and wire them to the services above. End-to-end service maps appear here.',
+    pop:['Application Service','Business Application','Relationships from Application Services up to Business Service Offerings'],
+    unlocks:'True end-to-end traceability: business service → offering → application service → hosts and databases. What Vulnerability Response and SecOps need to score risk.' },
+  { k:'design', step:'Stage 4', name:'Fly', domain:'Design &amp; Planning',
+    gist:'The enterprise-architecture layer. Least tested in this bank, but where capability and data-classification questions land.',
+    pop:['Business Capability','Information Object','Product'],
+    unlocks:'Portfolio and investment decisions — spotting redundant applications, tracking which apps hold PII/PCI for audit, understanding operational risk in a business-application context.' }
+];
+
+function renderReference(){
+  document.getElementById('refDomains').innerHTML = `
+    <div class="ref">
+      <div class="hero">
+        <div class="big">The domains are not layers of technology. They’re five different people’s questions about the same estate.</div>
+        <p>Every domain exists because somebody specific needs an answer, and its objects are shaped to answer <b>their</b> question. Work out whose question you’re being asked and the domain follows.</p>
+      </div>
+      <div class="reftable c3">
+        <div class="r hd"><div>Domain</div><div>The question it answers</div><div>Who’s asking</div></div>
+        ${[['found','Foundation','“Where is it, who owns it, what model is it?”','Everyone — shared reference data'],
+           ['design','Design &amp; Planning','“What should we be investing in?”','Enterprise Architect'],
+           ['build','Build &amp; Integration','“What did we actually deploy?”','Application / DevOps teams'],
+           ['deliv','Service Delivery','“Who supports this, and what breaks?”','IT operations, Technology Service Owners'],
+           ['sell','Service Consumption','“What can I request, and what will it cost?”','The business / end consumers']]
+          .map(([k,n,q,w])=>`<div class="r"><div class="nm" style="color:var(--d-${k})">${n}</div><div class="it">${q}</div><div>${w}</div></div>`).join('')}
+      </div>
+
+      <h3>The five, one at a time</h3>
+      <p>Each card ends with what the domain is <b>not</b> — you rarely get these wrong by forgetting what belongs, but by putting something in a neighbour.</p>
+      <div class="refgrid">
+        ${DOMAIN_DATA.map(d=>`
+          <div class="refcard" style="border-left-color:var(--d-${d.k})">
+            <h4 style="color:var(--d-${d.k})">${d.name}</h4>
+            <span class="sub">${d.sub}</span>
+            <p class="asks">${d.asks}</p>
+            <span class="lb">What lives here</span>
+            <ul>${d.lives.map(x=>`<li>${x}</li>`).join('')}</ul>
+            <span class="lb">Why it exists</span>
+            <p class="body">${d.why}</p>
+            <div class="not">${d.not}</div>
+          </div>`).join('')}
+      </div>
+
+      <h3>The part everyone trips on: three things called “Service”</h3>
+      <p>Your bank hands you the key in <span class="qtag">Q182</span>. The distinguishing question is not what the service <b>does</b> — it’s <b>who it is published to</b>.</p>
+      <div class="reftable c4">
+        <div class="r hd"><div></div>
+          <div style="color:var(--d-sell)">Business Service<br><span style="font-weight:400;text-transform:none;letter-spacing:0">Sell / Consume</span></div>
+          <div style="color:var(--d-deliv)">Technology Management Service<br><span style="font-weight:400;text-transform:none;letter-spacing:0">Service Delivery</span></div>
+          <div style="color:var(--d-build)">Application Service<br><span style="font-weight:400;text-transform:none;letter-spacing:0">Build &amp; Integration</span></div>
+        </div>
+        ${[['Published to','<b>Business users</b>','<b>Service Owners</b> (other IT)','<b>Nobody</b> — it <i>is</i> the deployed thing'],
+           ['It underpins','Business capabilities','Business <i>and</i> application services','The infrastructure beneath it'],
+           ['Plain English','Something the business consumes and can be billed for','Something IT provides to other parts of IT','A running application stack, discovered or mapped'],
+           ['Example','“Employee Payroll”','“Database Hosting”, “Network Connectivity”','“SAP Payroll — Production”'],
+           ['Tell-tale','A person outside IT would recognise the name','Only IT would ask another IT team for it by name','It has hosts, databases and a topology under it']]
+          .map(([l,a,b,c])=>`<div class="r"><div class="nm" style="color:var(--muted);font-size:.78rem">${l}</div><div>${a}</div><div>${b}</div><div>${c}</div></div>`).join('')}
+      </div>
+
+      <h3>Two more pairs worth separating</h3>
+      <p><b>Service vs. Offering.</b> A Service is the thing; an Offering is a specific commitment of it — different tiers, regions or SLAs. Offerings carry the commercial and operational detail, which is why <span class="qtag">Q19</span> puts Business Criticality on the <b>Service Offering</b>, not the service.</p>
+      <div class="refgrid">
+        <div class="refcard" style="border-left-color:var(--d-sell)">
+          <h4>Business Service</h4><span class="sub" style="color:var(--d-sell)">Sell / Consume</span>
+          <p class="body">The service as a concept. “We offer payroll.”</p>
+          <div class="not"><b>Employee Payroll</b></div>
+        </div>
+        <div class="refcard" style="border-left-color:var(--d-sell)">
+          <h4>Business Service Offering</h4><span class="sub" style="color:var(--d-sell)">Sell / Consume</span>
+          <p class="body">A committed variant, with its own criticality, SLA, price and audience.</p>
+          <div class="not"><b>Payroll — EMEA, Gold</b> · 99.9% · Business Criticality: 1</div>
+        </div>
+      </div>
+      <p><b>Business Application vs. Application Service.</b> These sound near-identical and sit in <b>different domains</b>. The split is planning vs. reality.</p>
+      <div class="refgrid">
+        <div class="refcard" style="border-left-color:var(--d-design)">
+          <h4>Business Application</h4><span class="sub" style="color:var(--d-design)">Design &amp; Planning</span>
+          <p class="body">The application as a <b>portfolio entry</b> — owner, cost, lifecycle, roadmap. One of these no matter how many environments exist.</p>
+          <div class="not"><b>SAP</b> — owned by Finance IT, retire 2027</div>
+        </div>
+        <div class="refcard" style="border-left-color:var(--d-build)">
+          <h4>Application Service</h4><span class="sub" style="color:var(--d-build)">Build &amp; Integration</span>
+          <p class="body">A <b>deployed instance</b>, mapped to hosts and databases. One per environment, and what an incident actually points at.</p>
+          <div class="not"><b>SAP — Production</b>, <b>SAP — UAT</b>, <b>SAP — Dev</b></div>
+        </div>
+      </div>
+
+      <h3>Where does it go? Four rules that settle most questions</h3>
+      <ol>
+        <li><b>Is it a fact about the organisation rather than about IT?</b> Location, department, vendor, cost centre, product model → <b style="color:var(--d-found)">Foundation</b>. <i>If it would still be true after you switched off every server, it’s Foundation.</i></li>
+        <li><b>Can a non-IT person request or consume it?</b> → <b style="color:var(--d-sell)">Sell / Consume</b>. <i>This is why the hospital’s CT-scan booking catalog item in <span class="qtag">Q4</span> is Sell/Consume — a doctor requests it.</i></li>
+        <li><b>Is it about supporting and running infrastructure?</b> → <b style="color:var(--d-deliv)">Service Delivery</b>. <i><span class="qtag">Q6</span>’s production-line monitoring systems land here: technology being managed, not something sold.</i></li>
+        <li><b>Is it about deciding, not doing?</b> Capabilities, portfolios, data classification, investment → <b style="color:var(--d-design)">Design &amp; Planning</b>. An actually-deployed, mapped stack → <b style="color:var(--d-build)">Build &amp; Integration</b>.</li>
+      </ol>
+
+      <div class="refnote">
+        <h4>⚠ One question in this quiz contradicts the above</h4>
+        <p><span class="qtag">Q183</span> maps <b>Application Service → Service Delivery</b>, which is wrong — an Application Service is a Build &amp; Integration object.</p>
+        <p>But it isn’t simply mis-keyed: the question only offers four domains, and <b>Build and Integration isn’t an option at all</b>, so no correct answer is available. Its Business Application → Design and Business Service → Sell/Consume pairings are both right.</p>
+      </div>
+    </div>`;
+
+  document.getElementById('refStages').innerHTML = `
+    <div class="ref">
+      <div class="hero">
+        <div class="big">Domains are where data lives. Stages are the order you populate them in.</div>
+        <p>Both lists have five items, which is where the confusion starts. Line them up and each stage turns out to be “the stage where you populate one domain” — that single mapping answers most stage questions on sight.</p>
+      </div>
+      <div class="reftable c3">
+        <div class="r hd"><div>Stage</div><div>Domain you populate</div><div>The objects</div></div>
+        ${[['found','Foundation','Foundation','Company, Location, User, Group, Business Unit, Cost Center, Product Model, Vendor'],
+           ['sell','Crawl','Sell / Consume','Business Service, Service Offering, Business Service Offering, Service Portfolio, catalog items'],
+           ['deliv','Walk','Service Delivery','Technology Management Service &amp; Offering, Dynamic CI Groups, infrastructure CIs'],
+           ['build','Run','Build &amp; Integration','Application Service, Business Application, service maps'],
+           ['design','Fly','Design &amp; Planning','Business Capability, Information Object, Product']]
+          .map(([k,s,d,o])=>`<div class="r"><div class="nm" style="color:var(--d-${k})">${s}</div><div>${d}</div><div>${o}</div></div>`).join('')}
+      </div>
+
+      <h3>The ladder, stage by stage</h3>
+      <p>Each stage assumes the one before it. You can’t do impact analysis on a business service (Walk) if nobody defined the business services (Crawl), and neither works without locations and groups (Foundation).</p>
+      <div class="refgrid">
+        ${STAGE_DATA.map(s=>`
+          <div class="refcard" style="border-left-color:var(--d-${s.k})">
+            <h4 style="color:var(--d-${s.k})">${s.name}</h4>
+            <span class="sub">${s.step} · ${s.domain}</span>
+            <p class="body">${s.gist}</p>
+            <span class="lb">What you populate</span>
+            <ul>${s.pop.map(x=>`<li>${x}</li>`).join('')}</ul>
+            <span class="lb">What it unlocks</span>
+            <div class="not">${s.unlocks}</div>
+          </div>`).join('')}
+      </div>
+
+      <h3>The one-line version</h3>
+      <p>The exam usually asks what a stage <b>buys you</b>, not what objects it holds:</p>
+      <ol>
+        <li><b style="color:var(--d-found)">Foundation</b> — you can describe <i>where things are and who owns them</i>.</li>
+        <li><b style="color:var(--d-sell)">Crawl</b> — you can say <i>what services the business buys</i>.</li>
+        <li><b style="color:var(--d-deliv)">Walk</b> — you can say <i>who supports a CI, and what breaks if it fails</i>.</li>
+        <li><b style="color:var(--d-build)">Run</b> — you can trace <i>an app end-to-end, business service down to host</i>.</li>
+        <li><b style="color:var(--d-design)">Fly</b> — you can make <i>investment and risk decisions</i> about the portfolio.</li>
+      </ol>
+
+      <div class="refnote">
+        <h4>⚠ Two questions in this quiz teach this backwards</h4>
+        <p><span class="qtag">Q7</span> asks which stage maps a Business Service Offering to the <b>Application Services</b> it depends on, and answers <b>Walk</b>. <span class="qtag">Q143</span> asks which stage uses <b>Technology Management Offerings</b> to populate support groups, and answers <b>Run</b>.</p>
+        <p>By the table above those are the wrong way round — Application Services are Run, Technical Service Offerings are Walk. They read as a straight swap, and <span class="qtag">Q10</span> settles it by putting technical services on the <b>Walk</b> tab of the CSDM Data Foundation Dashboard.</p>
+        <p>Both are still unmarked in the quiz. Answer what it expects to score the point, but learn the mapping above.</p>
+      </div>
+    </div>`;
+}
+
+function setRefTab(tab){
+  document.getElementById('refTabDomains').classList.toggle('on', tab==='domains');
+  document.getElementById('refTabStages').classList.toggle('on', tab==='stages');
+  document.getElementById('refDomains').classList.toggle('hide', tab!=='domains');
+  document.getElementById('refStages').classList.toggle('hide', tab!=='stages');
+  window.scrollTo({top:0, behavior:'smooth'});
+}
+function openReference(){
+  if(!document.getElementById('refDomains').innerHTML) renderReference();
+  show('reference');
+  window.scrollTo({top:0});
+}
 
 // --- auth ---
 function isAuthed(){
