@@ -282,6 +282,7 @@
     <div class="meta">
       <span id="counter"></span>
       <div class="row" style="gap:8px">
+        <button id="catToggle" class="flagbtn" onclick="toggleCategory()" title="Hide the category label so it doesn't hint at the answer">👁 Category</button>
         <button id="flag" class="flagbtn" onclick="toggleFlag()">⚑ Flag</button>
         <button class="flagbtn" onclick="quitToResults()">⏹ End &amp; score</button>
       </div>
@@ -550,6 +551,22 @@ function toggleSound(){
 }
 document.getElementById('soundToggle').textContent = soundOn ? '🔊 Sound' : '🔇 Muted';
 
+// --- category visibility (hide the category so it can't hint at the answer) ---
+let hideCat = localStorage.getItem('quizHideCat') === 'on';
+function applyCatVisibility(){
+  document.getElementById('cat').classList.toggle('hide', hideCat);
+  const b=document.getElementById('catToggle');
+  b.textContent = hideCat ? '🚫 Category' : '👁 Category';
+  b.classList.toggle('on', hideCat);
+  b.title = hideCat ? 'Show the category label again' : "Hide the category label so it doesn't hint at the answer";
+}
+function toggleCategory(){
+  hideCat=!hideCat;
+  localStorage.setItem('quizHideCat', hideCat?'on':'off');
+  applyCatVisibility();
+}
+applyCatVisibility();
+
 // --- auth ---
 function isAuthed(){
   try{
@@ -697,6 +714,7 @@ function render(){
   document.getElementById('counter').textContent=`Question ${session.i+1} of ${session.pool.length}`;
   document.getElementById('bar').style.width=((session.i)/session.pool.length*100)+'%';
   document.getElementById('cat').textContent=cur.category;
+  applyCatVisibility();
   const tt=document.getElementById('typeTag');
   if(cur.type==='multi'){tt.className='tag multi';tt.textContent='Select all that apply';}
   else if(cur.type==='match'){tt.className='tag match';tt.textContent='Matching';}
